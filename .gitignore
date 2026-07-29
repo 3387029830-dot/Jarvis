@@ -12,3 +12,4 @@ coverage/
 
 .jarvis-data/
 apps/desktop/.dev-data/
+.superdesign/tmp/

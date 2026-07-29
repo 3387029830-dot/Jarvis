@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 
+import { Showcase } from './showcase/Showcase';
+
 type BridgeState = 'checking' | 'ready' | 'unavailable';
 
-export function App(): React.JSX.Element {
+function Foundation(): React.JSX.Element {
   const [bridgeState, setBridgeState] = useState<BridgeState>('checking');
 
   useEffect(() => {
@@ -35,10 +37,11 @@ export function App(): React.JSX.Element {
   return (
     <main className="foundation">
       <section className="foundation__content" aria-labelledby="app-title">
-        <p className="foundation__eyebrow">Foundation build</p>
+        <p className="foundation__eyebrow">Secure desktop foundation</p>
         <h1 id="app-title">Jarvis</h1>
         <p className="foundation__description">
-          The secure desktop foundation is running. Presence and voice arrive in the next slices.
+          The desktop boundary is running. Product presence and voice interaction remain outside
+          this foundation slice.
         </p>
         <output
           className={`foundation__status foundation__status--${bridgeState}`}
@@ -50,4 +53,8 @@ export function App(): React.JSX.Element {
       </section>
     </main>
   );
+}
+
+export function App(): React.JSX.Element {
+  return window.location.hash.startsWith('#/design-system') ? <Showcase /> : <Foundation />;
 }

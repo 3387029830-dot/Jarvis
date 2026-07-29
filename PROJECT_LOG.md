@@ -73,3 +73,57 @@ Build the first high-fidelity vertical slice:
 ### Next priority
 
 Implement **JAR-002 — Build the design-system foundation**. Do not begin Presence or voice implementation before its tokens, primitives, accessibility states, and reduced-motion behavior are verified.
+
+---
+
+## 2026-07-29 — JAR-002 design-system foundation completed
+
+### What changed
+
+- Established the “editorial observatory” visual direction: graphite luminance layers,
+  warm-neutral text, one restrained ice-blue accent, generous space, and quiet structural rules.
+- Added CSS-variable tokens for backgrounds, text, semantic colors, borders, spacing, typography,
+  radii, border widths, shadows, restrained glow, motion, easing, opacity, z-index, focus rings,
+  and readable content widths.
+- Added reusable Button, IconButton, Panel, Card, Badge, Tooltip, Dialog, ScrollArea, Spinner, and
+  VisuallyHidden primitives with typed props.
+- Added a development-only design-system showcase with token specimens, Chinese and mixed-language
+  typography, component variants, every requested interaction state, semantic feedback,
+  long-content overflow, Dialog, and reduced-motion simulation.
+- Added deterministic production-Electron evidence modes for viewport and showcase state without
+  modifying the typed preload health-check API.
+
+### Verification
+
+- `pnpm format:check`, `pnpm lint`, and strict `pnpm typecheck` passed.
+- `pnpm test` passed 18 tests across 9 files, including all JAR-001 tests.
+- `pnpm build` produced main, preload, and renderer production bundles.
+- `pnpm smoke` launched the production Electron application and returned
+  `{"process":"main","status":"ok"}`.
+- A visible production Electron showcase window launched, remained responsive, and closed
+  normally after manual inspection.
+- Five exact-size screenshots were reviewed under `artifacts/jar-002/`.
+
+### Decisions and lessons
+
+- CSS custom properties are the runtime source of truth; TypeScript helpers reference those
+  variables without duplicating values.
+- Purpose-built primitives preserve the Jarvis visual language without importing a component
+  framework. Testing Library and jsdom were added only for DOM and keyboard behavior tests.
+- Native Dialog semantics are supplemented with explicit initial focus, Tab wrapping, Escape
+  handling, and return focus.
+- Reduced motion removes translation, scale, spinning, and continuous animation while retaining
+  static color and boundary feedback.
+
+### Remaining risk
+
+- Windows system-font availability is intentional; typography may differ slightly on non-Windows
+  developer machines.
+- The showcase proves the shared language, not the final Presence composition.
+- GitHub CI status must be confirmed after this commit is pushed.
+
+### Next priority
+
+Proceed to **JAR-003 — Implement the app shell and Presence page** only after the JAR-002 commit and
+CI run are confirmed. Do not introduce voice state, providers, persistence, or cognition-map
+features in that issue.

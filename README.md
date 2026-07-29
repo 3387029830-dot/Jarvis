@@ -94,7 +94,8 @@ Codex 不应一次性实现整个产品。每次只完成一个可验证的垂�
 - [x] 前端与语音优先级确定
 - [x] 认知数据模型草案确定
 - [x] Electron 项目初始化
-- [ ] 设计系统与 App Shell
+- [x] 设计系统基础
+- [ ] App Shell
 - [ ] Presence 页面
 - [ ] 真实按键语音闭环
 - [ ] Conversation 页面
@@ -128,3 +129,6 @@ pnpm smoke
 
 开发模式的数据目录位于操作系统临时目录，不写入仓库。`pnpm smoke` 会启动生产构建，
 并从真实 Renderer 上下文调用强类型 preload health-check API。
+
+当前开发模式打开 `#/design-system` showcase，用于验证 JAR-002 的 token、基础组件、
+交互状态、中文排版、Dialog、内容溢出和 reduced-motion；它不是正式 Presence 页面。

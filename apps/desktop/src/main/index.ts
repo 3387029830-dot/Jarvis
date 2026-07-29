@@ -5,9 +5,15 @@ import path from 'node:path';
 import type { HealthCheckResult } from '../shared/health';
 import { resolveUserDataPath } from './data-path';
 import { registerHealthCheckHandler } from './health-handler';
+import { createShowcaseHash, resolveShowcaseEvidenceOptions } from './showcase-evidence';
 import { createWindowOptions } from './window-options';
 
 const isSmokeTest = process.env.JARVIS_SMOKE_TEST === '1';
+const showcaseEvidence = resolveShowcaseEvidenceOptions(process.env);
+
+if (showcaseEvidence.enabled) {
+  app.commandLine.appendSwitch('force-device-scale-factor', '1');
+}
 
 const userDataPath = resolveUserDataPath({
   isPackaged: app.isPackaged,
@@ -36,8 +42,13 @@ async function verifyRendererBridge(window: BrowserWindow): Promise<void> {
 
     const screenshotPath = process.env.JARVIS_SMOKE_SCREENSHOT;
     if (screenshotPath) {
+      const rendererHash = (await window.webContents.executeJavaScript(
+        'window.location.hash',
+        true,
+      )) as string;
+      console.log(`JARVIS_SHOWCASE_ROUTE ${rendererHash || '(foundation)'}`);
       await new Promise((resolve) => {
-        setTimeout(resolve, 100);
+        setTimeout(resolve, 500);
       });
       const screenshot = await window.webContents.capturePage();
       await mkdir(path.dirname(screenshotPath), { recursive: true });
@@ -54,7 +65,10 @@ async function verifyRendererBridge(window: BrowserWindow): Promise<void> {
 
 async function createMainWindow(): Promise<BrowserWindow> {
   const window = new BrowserWindow(
-    createWindowOptions(path.join(__dirname, '../preload/index.js'), !isSmokeTest),
+    createWindowOptions(path.join(__dirname, '../preload/index.js'), !isSmokeTest, {
+      height: showcaseEvidence.height,
+      width: showcaseEvidence.width,
+    }),
   );
 
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -63,9 +77,14 @@ async function createMainWindow(): Promise<BrowserWindow> {
   });
 
   const rendererUrl = process.env.ELECTRON_RENDERER_URL;
+  const showcaseHash = createShowcaseHash(showcaseEvidence);
 
   if (rendererUrl) {
-    await window.loadURL(rendererUrl);
+    await window.loadURL(`${rendererUrl}#${showcaseHash}`);
+  } else if (showcaseEvidence.enabled) {
+    await window.loadFile(path.join(__dirname, '../renderer/index.html'), {
+      hash: showcaseHash,
+    });
   } else {
     await window.loadFile(path.join(__dirname, '../renderer/index.html'));
   }

@@ -13,5 +13,11 @@ describe('createWindowOptions', () => {
       sandbox: true,
       webSecurity: true,
     });
+    expect(options).toMatchObject({
+      height: 800,
+      minWidth: 1024,
+      useContentSize: true,
+      width: 1280,
+    });
   });
 });
