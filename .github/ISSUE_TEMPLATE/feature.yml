@@ -1,0 +1,39 @@
+name: Product feature
+about: Implement one verifiable Jarvis behavior
+title: '[JAR-000] '
+labels: ['type:feature']
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User-visible outcome
+      description: Describe what the user can do, see, or hear after this issue.
+    validations:
+      required: true
+  - type: textarea
+    id: narrative
+    attributes:
+      label: Experience narrative
+      description: Describe the complete interaction, including cancellation and failure.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-scope
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use observable, testable criteria.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification evidence
+      description: Commands, tests, screenshots, or recordings required.
+    validations:
+      required: true
