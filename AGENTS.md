@@ -71,6 +71,18 @@ Do not add unless a task explicitly requires it:
 - Support interruption and cancellation in the interaction model, even when a provider adapter does not yet implement full duplex audio.
 - Respect reduced-motion settings.
 
+## Product language rules
+
+- Simplified Chinese is the default language for the formal product experience.
+- Use English only for the Jarvis brand, code/API identifiers, necessary proper nouns, and weak
+  secondary technical labels.
+- Navigation, actions, state, error, empty-state, privacy, accessibility, and help copy must be
+  understandable in Simplified Chinese without relying on English.
+- Keep formal product copy in the typed `zh-CN` renderer catalog and follow
+  `docs/COPY_GUIDE_ZH_CN.md`.
+- Never describe mock, disconnected, or unsaved behavior as if it were a working provider,
+  persistent memory, or background cognition process.
+
 ## Design rules
 
 - Dark-first, calm, premium, atmospheric.

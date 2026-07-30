@@ -4,6 +4,8 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './design-system/tokens.css';
 import './design-system/components.css';
+import './shell/app-shell.css';
+import './presence/presence.css';
 import './showcase/showcase.css';
 import './styles.css';
 

@@ -2,19 +2,22 @@ import { describe, expect, it } from 'vitest';
 
 import { createShowcaseHash, resolveShowcaseEvidenceOptions } from './showcase-evidence';
 
-describe('showcase evidence options', () => {
-  it('uses safe viewport defaults and leaves showcase evidence disabled', () => {
+describe('visual evidence options', () => {
+  it('uses safe viewport defaults and leaves evidence disabled', () => {
     expect(resolveShowcaseEvidenceOptions({})).toEqual({
       dialogOpen: false,
       enabled: false,
       focusTarget: false,
       height: 800,
+      presenceVariant: 'populated',
       reducedMotion: false,
+      route: 'design-system',
       width: 1280,
+      zoomFactor: 1,
     });
   });
 
-  it('accepts supported states and rejects dimensions below the app minimum', () => {
+  it('keeps the JAR-002 design-system evidence contract', () => {
     const result = resolveShowcaseEvidenceOptions({
       JARVIS_SHOWCASE_DIALOG: '1',
       JARVIS_SHOWCASE_EVIDENCE: '1',
@@ -35,5 +38,18 @@ describe('showcase evidence options', () => {
     expect(createShowcaseHash(result)).toBe(
       '/design-system?dialog=open&focus=button&motion=reduced',
     );
+  });
+
+  it('creates deterministic Presence variants and clamps zoom', () => {
+    const result = resolveShowcaseEvidenceOptions({
+      JARVIS_EVIDENCE: '1',
+      JARVIS_EVIDENCE_ROUTE: 'presence',
+      JARVIS_EVIDENCE_ZOOM: '2',
+      JARVIS_PRESENCE_VARIANT: 'empty',
+      JARVIS_SHOWCASE_FOCUS: '1',
+    });
+
+    expect(result.zoomFactor).toBe(2);
+    expect(createShowcaseHash(result)).toBe('/presence?variant=empty&focus=voice');
   });
 });

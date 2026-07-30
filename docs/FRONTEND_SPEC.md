@@ -24,6 +24,23 @@ Avoid:
 - decorative node graphs with no meaning;
 - excessive glass blur and glowing borders.
 
+## 1.1 Product language
+
+Simplified Chinese is the default language of the formal Jarvis product interface.
+
+- Navigation, headings, actions, state, error, empty-state, privacy, and help copy are Chinese-first.
+- English is limited to the Jarvis brand, code/API identifiers, necessary proper nouns, and weak
+  secondary labels.
+- Static product copy comes from the typed `zh-CN` catalog; dynamic content arrives through typed
+  view-models.
+- Dates and numbers use `Intl` with the `zh-CN` locale.
+- Chinese line height, punctuation, wrapping, and mixed Chinese/English text must be explicitly
+  verified.
+- Development showcases may retain component or token names such as Button and CSS variables, but
+  their explanatory copy remains Chinese-first.
+
+See `docs/COPY_GUIDE_ZH_CN.md` for wording and honesty requirements.
+
 ## 2. Application shell
 
 ### Left rail
