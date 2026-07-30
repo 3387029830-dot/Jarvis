@@ -1,10 +1,13 @@
-export type EvidenceRoute = 'design-system' | 'presence';
+export type EvidenceRoute = 'conversation' | 'design-system' | 'presence';
+export type ConversationEvidenceState = 'error' | 'normal' | 'offline' | 'streaming';
 export type PresenceEvidenceVariant = 'empty' | 'single' | 'populated';
 export type VoiceEvidenceState =
   'live' | 'idle' | 'listening' | 'transcribing' | 'responding' | 'speaking' | 'permission-denied';
 
 export interface ShowcaseEvidenceOptions {
   dialogOpen: boolean;
+  conversationScenario: string;
+  conversationState: ConversationEvidenceState;
   enabled: boolean;
   focusTarget: boolean;
   height: number;
@@ -31,7 +34,11 @@ function parseZoomFactor(value: string | undefined): number {
 }
 
 function parseRoute(value: string | undefined): EvidenceRoute {
-  return value === 'presence' ? 'presence' : 'design-system';
+  return value === 'presence' || value === 'conversation' ? value : 'design-system';
+}
+
+function parseConversationState(value: string | undefined): ConversationEvidenceState {
+  return value === 'error' || value === 'offline' || value === 'streaming' ? value : 'normal';
 }
 
 function parsePresenceVariant(value: string | undefined): PresenceEvidenceVariant {
@@ -53,6 +60,8 @@ export function resolveShowcaseEvidenceOptions(
   environment: NodeJS.ProcessEnv,
 ): ShowcaseEvidenceOptions {
   return {
+    conversationScenario: environment.JARVIS_CONVERSATION_SCENARIO ?? 'uncertainty-and-crowd',
+    conversationState: parseConversationState(environment.JARVIS_CONVERSATION_STATE),
     dialogOpen: environment.JARVIS_SHOWCASE_DIALOG === '1',
     enabled: environment.JARVIS_SHOWCASE_EVIDENCE === '1' || environment.JARVIS_EVIDENCE === '1',
     focusTarget: environment.JARVIS_SHOWCASE_FOCUS === '1',
@@ -75,11 +84,27 @@ export function createShowcaseHash(options: ShowcaseEvidenceOptions): string {
       parameters.set('voice', options.voiceState);
     }
   }
+  if (options.route === 'conversation') {
+    parameters.set('exploration', options.conversationScenario);
+    if (options.conversationState !== 'normal') {
+      parameters.set('state', options.conversationState);
+    }
+    if (options.voiceState !== 'live') {
+      parameters.set('voice', options.voiceState);
+    }
+  }
   if (options.dialogOpen && options.route === 'design-system') {
     parameters.set('dialog', 'open');
   }
   if (options.focusTarget) {
-    parameters.set('focus', options.route === 'presence' ? 'voice' : 'button');
+    parameters.set(
+      'focus',
+      options.route === 'presence'
+        ? 'voice'
+        : options.route === 'conversation'
+          ? 'composer'
+          : 'button',
+    );
   }
   if (options.reducedMotion) {
     parameters.set('motion', 'reduced');

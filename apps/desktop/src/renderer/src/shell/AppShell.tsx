@@ -5,12 +5,12 @@ import { Tooltip } from '../design-system';
 import { AppIcon, type AppIconName } from './AppIcon';
 
 interface NavigationItem {
+  readonly route?: 'conversation' | 'presence';
   readonly icon: AppIconName;
   readonly label: string;
 }
 
 const futureNavigation = [
-  { icon: 'conversation', label: copy.navigation.conversation },
   { icon: 'map', label: copy.navigation.map },
   { icon: 'evolution', label: copy.navigation.evolution },
   { icon: 'archive', label: copy.navigation.archive },
@@ -39,7 +39,41 @@ function UnavailableNavigationItem({ icon, label }: NavigationItem): React.JSX.E
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }): React.JSX.Element {
+function AvailableNavigationItem({
+  active,
+  icon,
+  label,
+  route,
+  secondary,
+}: NavigationItem & {
+  active: boolean;
+  route: 'conversation' | 'presence';
+  secondary: string;
+}): React.JSX.Element {
+  return (
+    <li>
+      <a
+        aria-current={active ? 'page' : undefined}
+        className={`app-nav__item${active ? ' app-nav__item--active' : ''}`}
+        href={`#/${route}`}
+      >
+        <AppIcon name={icon} />
+        <span className="app-nav__text">
+          <span>{label}</span>
+          <small>{secondary}</small>
+        </span>
+      </a>
+    </li>
+  );
+}
+
+export function AppShell({
+  activeRoute,
+  children,
+}: {
+  activeRoute: 'conversation' | 'presence';
+  children: ReactNode;
+}): React.JSX.Element {
   return (
     <div className="app-shell">
       <aside className="app-shell__rail">
@@ -55,19 +89,20 @@ export function AppShell({ children }: { children: ReactNode }): React.JSX.Eleme
 
         <nav aria-label={copy.navigation.label} className="app-nav">
           <ul>
-            <li>
-              <button
-                aria-current="page"
-                className="app-nav__item app-nav__item--active"
-                type="button"
-              >
-                <AppIcon name="presence" />
-                <span className="app-nav__text">
-                  <span>{copy.navigation.current}</span>
-                  <small>Presence</small>
-                </span>
-              </button>
-            </li>
+            <AvailableNavigationItem
+              active={activeRoute === 'presence'}
+              icon="presence"
+              label={copy.navigation.current}
+              route="presence"
+              secondary="Presence"
+            />
+            <AvailableNavigationItem
+              active={activeRoute === 'conversation'}
+              icon="conversation"
+              label={copy.navigation.conversation}
+              route="conversation"
+              secondary="Conversation"
+            />
             {futureNavigation.map((item) => (
               <UnavailableNavigationItem {...item} key={item.label} />
             ))}

@@ -8,7 +8,9 @@ import {
 
 import { copy } from '../copy';
 import { Badge, Button } from '../design-system';
+import type { VoiceInteractionMode } from './interaction-mode';
 import { presentVoiceState, type VoiceControllerState } from './voice-state';
+import { activateToggleVoice, createVoiceCommands, voicePrimaryLabel } from './voice-gestures';
 import type { VoiceControllerBinding } from './use-voice-controller';
 
 function formatDuration(durationMs: number): string {
@@ -43,17 +45,23 @@ function VoiceWaveform({
 }
 
 function CurrentVoiceRound({
+  mode,
   onCancel,
   onRecover,
   reducedMotion,
   state,
 }: {
+  mode: VoiceInteractionMode;
   onCancel(): void;
   onRecover(): void;
   reducedMotion: boolean;
   state: VoiceControllerState;
 }): React.JSX.Element {
   const presentation = presentVoiceState(state, copy.voice.state);
+  const action =
+    mode === 'toggle' && state.phase === 'listening'
+      ? copy.voice.toggleListeningAction
+      : presentation.action;
   const canCancel = ['listening', 'transcribing', 'understanding', 'responding_text'].includes(
     state.phase,
   );
@@ -75,7 +83,7 @@ function CurrentVoiceRound({
       <div aria-atomic="true" aria-live="polite" className="voice-round__status" role="status">
         <span className="voice-round__status-mark" aria-hidden="true" />
         <div>
-          <strong>{presentation.action}</strong>
+          <strong>{action}</strong>
           <p>{presentation.detail}</p>
         </div>
         {state.durationMs > 0 ? (
@@ -121,7 +129,11 @@ function CurrentVoiceRound({
             </Button>
             <Button
               onClick={() =>
-                document.querySelector<HTMLInputElement>('#presence-question')?.focus()
+                document
+                  .querySelector<HTMLInputElement | HTMLTextAreaElement>(
+                    '#conversation-input, #presence-question',
+                  )
+                  ?.focus()
               }
               size="small"
               variant="quiet"
@@ -138,6 +150,8 @@ function CurrentVoiceRound({
 export interface VoiceInteractionProps {
   readonly controller: VoiceControllerBinding;
   readonly isEvidence: boolean;
+  readonly mode: VoiceInteractionMode;
+  readonly onModeChange: (mode: VoiceInteractionMode) => void;
   readonly reducedMotion: boolean;
   readonly state: VoiceControllerState;
   readonly voiceButtonRef: RefObject<HTMLButtonElement | null>;
@@ -146,14 +160,16 @@ export interface VoiceInteractionProps {
 export function VoiceInteraction({
   controller,
   isEvidence,
+  mode,
+  onModeChange,
   reducedMotion,
   state,
   voiceButtonRef,
 }: VoiceInteractionProps): React.JSX.Element {
-  const presentation = presentVoiceState(state, copy.voice.state);
-  const holdEnabled =
+  const interactionEnabled =
     state.permission === 'requesting' ||
     ['idle', 'listening', 'speaking', 'error'].includes(state.phase);
+  const commands = createVoiceCommands(controller);
 
   useEffect(() => {
     if (isEvidence) {
@@ -176,7 +192,12 @@ export function VoiceInteraction({
   }, [controller, isEvidence]);
 
   function handlePointerDown(event: PointerEvent<HTMLButtonElement>): void {
-    if (isEvidence || !holdEnabled || (event.pointerType === 'mouse' && event.button !== 0)) {
+    if (
+      mode !== 'hold' ||
+      isEvidence ||
+      !interactionEnabled ||
+      (event.pointerType === 'mouse' && event.button !== 0)
+    ) {
       return;
     }
     event.preventDefault();
@@ -185,7 +206,7 @@ export function VoiceInteraction({
   }
 
   function handlePointerUp(event: PointerEvent<HTMLButtonElement>): void {
-    if (isEvidence) {
+    if (mode !== 'hold' || isEvidence) {
       return;
     }
     event.preventDefault();
@@ -204,7 +225,7 @@ export function VoiceInteraction({
       controller.cancel();
       return;
     }
-    if ((event.key === ' ' || event.key === 'Enter') && !event.repeat) {
+    if (mode === 'hold' && (event.key === ' ' || event.key === 'Enter') && !event.repeat) {
       event.preventDefault();
       controller.pressStart();
     }
@@ -214,7 +235,7 @@ export function VoiceInteraction({
     if (isEvidence) {
       return;
     }
-    if (event.key === ' ' || event.key === 'Enter') {
+    if (mode === 'hold' && (event.key === ' ' || event.key === 'Enter')) {
       event.preventDefault();
       controller.release();
     }
@@ -225,9 +246,14 @@ export function VoiceInteraction({
       <div className="presence-voice">
         <Button
           aria-describedby="voice-disclosure"
-          aria-disabled={!holdEnabled}
+          aria-disabled={!interactionEnabled}
           aria-pressed={state.phase === 'listening'}
           data-voice-phase={state.phase}
+          onClick={() => {
+            if (mode === 'toggle' && !isEvidence && interactionEnabled) {
+              activateToggleVoice(commands, state);
+            }
+          }}
           onContextMenu={(event) => event.preventDefault()}
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
@@ -238,14 +264,34 @@ export function VoiceInteraction({
           size="large"
         >
           <span className="presence-voice__pulse" aria-hidden="true" />
-          {presentation.action}
+          {voicePrimaryLabel(mode, state)}
         </Button>
-        <p id="voice-disclosure">{presentation.detail}</p>
+        <p id="voice-disclosure">
+          {mode === 'toggle' ? copy.voice.toggleModeDescription : copy.voice.holdModeDescription}
+        </p>
       </div>
+
+      <fieldset className="voice-mode" aria-label={copy.voice.modeLabel}>
+        <legend>{copy.voice.modeLabel}</legend>
+        {(['toggle', 'hold'] as const).map((option) => (
+          <label key={option}>
+            <input
+              checked={mode === option}
+              disabled={!['idle', 'error'].includes(state.phase)}
+              name="voice-mode"
+              onChange={() => onModeChange(option)}
+              type="radio"
+              value={option}
+            />
+            <span>{option === 'toggle' ? copy.voice.toggleMode : copy.voice.holdMode}</span>
+          </label>
+        ))}
+      </fieldset>
 
       <p className="voice-demo-disclosure">{copy.voice.demoDisclosure}</p>
 
       <CurrentVoiceRound
+        mode={mode}
         onCancel={controller.cancel}
         onRecover={controller.recover}
         reducedMotion={reducedMotion}

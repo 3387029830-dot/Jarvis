@@ -5,6 +5,8 @@ import { createShowcaseHash, resolveShowcaseEvidenceOptions } from './showcase-e
 describe('visual evidence options', () => {
   it('uses safe viewport defaults and leaves evidence disabled', () => {
     expect(resolveShowcaseEvidenceOptions({})).toEqual({
+      conversationScenario: 'uncertainty-and-crowd',
+      conversationState: 'normal',
       dialogOpen: false,
       enabled: false,
       focusTarget: false,
@@ -53,5 +55,19 @@ describe('visual evidence options', () => {
 
     expect(result.zoomFactor).toBe(2);
     expect(createShowcaseHash(result)).toBe('/presence?variant=empty&voice=speaking&focus=voice');
+  });
+
+  it('creates deterministic Conversation evidence states', () => {
+    const result = resolveShowcaseEvidenceOptions({
+      JARVIS_CONVERSATION_SCENARIO: 'knowledge-action-gap',
+      JARVIS_CONVERSATION_STATE: 'offline',
+      JARVIS_EVIDENCE: '1',
+      JARVIS_EVIDENCE_ROUTE: 'conversation',
+      JARVIS_SHOWCASE_FOCUS: '1',
+      JARVIS_VOICE_STATE: 'listening',
+    });
+    expect(createShowcaseHash(result)).toBe(
+      '/conversation?exploration=knowledge-action-gap&state=offline&voice=listening&focus=composer',
+    );
   });
 });

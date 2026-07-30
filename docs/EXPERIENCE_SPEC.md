@@ -21,7 +21,7 @@ The Presence screen should show:
 - one contextual greeting;
 - two or three active explorations;
 - one unresolved question worth continuing;
-- a clear push-to-talk action;
+- a clear voice action, defaulting to click-to-start / click-to-finish;
 - a subtle indication of recent cognitive change.
 
 Example:
@@ -60,10 +60,12 @@ Jarvis may say what it remembers and why a past item is relevant. It must not im
 
 ### B. Speak
 
-- User holds the configured key or presses the microphone control.
+- User clicks the microphone control to start and clicks again to finish by default.
+- A hold-to-talk preference remains available for pointer and keyboard users.
 - Visual response begins immediately.
 - Waveform and live/partial transcript appear.
-- Releasing the key ends capture.
+- The selected gesture only adapts capture commands; both modes share the same canonical voice state.
+- Future VAD may replace the finishing gesture, but it must not create a separate conversation path.
 
 ### C. Understand
 
@@ -77,6 +79,7 @@ Jarvis may say what it remembers and why a past item is relevant. It must not im
 - TTS begins when enough content is available.
 - User may interrupt playback and speak again.
 - Related concepts emerge in the side context, not as intrusive popups.
+- Voice and typed turns remain in one editorial timeline rather than separate modes or chat bubbles.
 
 ### E. Reflect
 

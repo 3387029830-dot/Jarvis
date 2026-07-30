@@ -77,6 +77,13 @@ Create an immersive conversation view rather than a generic bubble chat.
 - Voice and typed messages share one timeline.
 - A conversation can be resumed from Presence.
 - Loading, retry, cancel, and offline states are designed.
+- Click-to-start / click-to-finish is the default voice gesture; hold-to-talk remains available.
+- Presence and Conversation share the selected gesture mode and one `VoiceController`.
+- Gesture adapters emit capture commands rather than owning voice-state transitions.
+- Three deterministic Chinese scenarios cover uncertainty/crowds, money/consensus/institutions,
+  and the knowledge/action gap.
+- IME composition, Enter submit, Shift+Enter newline, keyboard focus, reduced motion, and 1024 px
+  minimum width are verified.
 
 ## JAR-006 — Add provider contracts and one real voice path
 
@@ -92,6 +99,15 @@ Replace mocks behind interfaces without changing the UI contract.
 - Provider errors map to domain errors.
 - Text-only fallback works when TTS fails.
 - Mock adapters remain available for tests and demos.
+- A vendor-neutral `VoiceProfile` contract supports Original Profile, Licensed Character Profile,
+  and Consented Clone Profile without changing Conversation core.
+- Voice Profile prosody is separate from provider-specific voice identifiers.
+- Licensed and cloned profiles retain explicit authorization metadata; no unauthorized specific
+  person or actor voice is shipped as a built-in asset.
+- A profile can be previewed and selected, and switching it does not change conversation memory,
+  cognition history, or Jarvis persona.
+- At least one real Chinese TTS path binds through a Provider binding and preserves readable text
+  when synthesis is unavailable.
 
 ## JAR-007 — Add SQLite and conversation persistence
 

@@ -2,7 +2,7 @@
 
 ## 1. 原则
 
-语音不是后续插件，而是 Jarvis 的第一入口。第一阶段优先保证按住说话可靠、状态可见、随时可取消，再考虑 VAD、全双工或唤醒词。
+语音不是后续插件，而是 Jarvis 的第一入口。JAR-005 默认使用“点击开始、再次点击结束”，同时保留可选“按住说话”；两者共享同一个控制器、状态机和页面间偏好。状态可见、随时可取消优先于 VAD、全双工或唤醒词。
 
 JAR-004 必须持续区分：
 
@@ -61,16 +61,20 @@ Canonical phase：
 
 每轮使用 `sessionId`；与当前 session 不一致的异步 action 必须被 reducer 忽略。
 
-## 3. JAR-004 实际行为
+## 3. JAR-004 / JAR-005 实际行为
 
-- 只在 pointerdown 或聚焦按钮后的 Space / Enter keydown 请求权限。
+- `toggle` 是默认模式：点击或聚焦后按 Space / Enter 开始，再次激活结束。
+- `hold` 是可选模式：pointerdown / keydown 开始，pointerup / keyup 结束。
+- 两种模式在 Presence 和 Conversation 之间共享，但刷新后恢复默认；它不是持久设置。
+- 模式切换只适配手势，统一发出 `startCapture`、`finishCapture`、`cancel`、`interruptAndCapture`，不得复制状态机。
+- 只在明确的开始录音手势后请求权限，应用启动和页面切换不会预先请求。
 - 获得权限后使用 `MediaRecorder` 录音，并用 `AnalyserNode` 生成真实音量 level。
 - 松开后停止 recorder、analyser、animation frame、tracks 和 AudioContext，再进入 Mock 链。
 - 小于 300ms 的录音不进入模拟转录；60 秒时自动结束。
 - pointercancel、Escape、窗口失焦和组件卸载都会清理当前资源。
 - key repeat 不创建新 session；pointer capture 保证指针移出按钮仍可正确松开。
-- speaking 时新的按住先停止 playback 和旧 AbortController，再创建新 session。
-- Presence 只保留当前一轮，不创建消息时间线，不持久化。
+- speaking 时新的点击或按住先停止 playback 和旧 AbortController，再创建新 session。
+- Presence 只保留当前一轮；Conversation 会把文字和模拟语音结果投影到同一时间线，但不持久化。
 
 ## 4. 确定性 Mock 链
 
@@ -113,13 +117,21 @@ JAR-006 接入真实 STT、模型与 TTS 时，凭据和网络调用必须进入
 
 ## 8. 状态体验目标
 
-- 按下后 100ms 内显示权限请求或 listening 状态，但不得提前声称录音。
+- 用户激活语音入口后 100ms 内显示权限请求或 listening 状态，但不得提前声称录音。
 - 每个阶段都有简体中文文本等价描述。
 - 用户可取消所有处理阶段，并可在 speaking 时立即打断。
 - reduced-motion 移除位移、缩放和连续动画，保留静态边框、文字、level 与 phase 差异。
 - Orb 不使用粒子场、HUD、随机波形或与麦克风无关的 listening 动画。
 
-## 9. 后续能力
+## 9. 交互模式演进
+
+- 当前默认：`toggle`，适合桌面持续思考和较长表达。
+- 当前可选：`hold`，适合短句、明确的开始/结束边界和已有肌肉记忆。
+- 后续候选：VAD 或连续对话，但必须作为适配层接入同一命令契约，不能建立第二套 `VoiceController`。
+- 文字输入始终是同等可用的回退路径；TTS 失败不得隐藏已经生成的文字。
+- 交互模式与 Voice Profile 相互独立：切换声线不会改变录音手势、Conversation 记忆或 Jarvis 人格。
+
+## 10. 后续能力
 
 以下不属于 JAR-004：
 
@@ -128,3 +140,5 @@ JAR-006 接入真实 STT、模型与 TTS 时，凭据和网络调用必须进入
 - VAD、持续监听、全局快捷键、全双工和唤醒词；
 - 永久原始音频归档；
 - provider 选择、凭据与自动删除设置。
+
+Voice Profile 的类别、授权来源和 Provider binding 见 `docs/VOICE_PROFILES.md`。

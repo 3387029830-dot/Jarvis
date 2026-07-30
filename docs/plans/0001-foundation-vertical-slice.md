@@ -205,6 +205,21 @@ For JAR-004 specifically:
 - Inspect 1440×900, 1024×900, reduced-motion, error, and 200% zoom states.
 - Capture the eight required PNGs and evidence manifest in `artifacts/jar-004/`.
 
+For JAR-005 specifically:
+
+- Run format check, lint, strict typecheck, all unit/component tests, production build, and the
+  existing Electron IPC smoke without changing preload.
+- Test route parsing, known/unknown exploration recovery, three deterministic scenarios, shared
+  voice/text timeline, IME composition, Enter/Shift+Enter, streaming, cancellation, stale session
+  rejection, same-response retry, offline, error, toggle/hold gestures, and shared interaction mode.
+- Launch visible Windows Electron and exercise Presence → Conversation, text input, real microphone
+  toggle capture, hold capture, speaking interruption, Escape cancellation, focus, 1024 px width,
+  200% zoom, reduced motion, and recovery states.
+- Capture the nine required production-Electron PNGs and an evidence manifest in
+  `artifacts/jar-005/`.
+- Document the future Voice Profile contract and authorization boundary without adding a Provider,
+  profile installer, credentials, real STT/model/TTS, or persistence.
+
 ## Risks and decisions
 
 - WebGL Orb can delay the vertical slice. Implement a semantic 2D fallback first if WebGL blocks interaction work.
@@ -231,6 +246,15 @@ For JAR-004 specifically:
   speech.
 - The production Renderer bundle is approximately 657 kB. No dependency was added for JAR-004, but
   route-level splitting should be reconsidered as JAR-005 adds UI.
+- JAR-005 keeps hash routing because only Presence, Conversation, and the development showcase
+  exist. Additional product routes should trigger a routing-dependency review.
+- `toggle` and `hold` are gesture adapters over one controller. Future VAD must use the same command
+  boundary rather than creating a second voice state machine.
+- Voice Profiles have three authorized categories and vendor-neutral Provider bindings.
+  Conversation stores only profile identity; provider voice IDs, credentials, and authorization
+  validation remain outside renderer.
+- The Renderer bundle is approximately 689 kB after Conversation. Route-level splitting is now a
+  concrete JAR-006 engineering risk.
 
 ## JAR-003 deviations and rationale
 
@@ -268,6 +292,26 @@ For JAR-004 specifically:
 - Evidence phase screenshots use deterministic state snapshots so they remain repeatable. Real
   microphone analyser, complete playback, interruption, and cancellation were separately exercised
   in a visible live Electron run and are not inferred from those snapshots.
+
+## JAR-005 deviations and rationale
+
+- The initial Conversation composition placed the full Presence voice round below the timeline.
+  Real 1440×900 review showed that it hid the reading surface, so the existing controller UI was
+  retained but presented as a compact horizontal input band. This changes layout only, not product
+  scope or voice behavior.
+- The task requires click-to-start / click-to-finish as the default while preserving hold. A small
+  shared in-memory preference and gesture-command adapter were added instead of placing mode inside
+  `VoiceControllerState`; interaction preference is not a canonical voice phase.
+- Voice transcript and Mock response are projected into the same Conversation timeline. Raw audio
+  remains renderer-local and ephemeral; no audio, message, or profile IPC was added.
+- Deterministic evidence states use query parameters only in smoke/evidence launches. They are not
+  exposed as product settings and do not imply persisted Conversation state.
+- Superdesign Direction A supplied spatial structure and Direction B supplied editorial reading
+  rhythm. Generated dashboard density and decorative UI were omitted to preserve the approved
+  cognition-observatory language.
+- Voice Profile work is documentation and architecture only. Implementing profile installation,
+  Provider bindings, real TTS, credentials, or authorization enforcement would expand into JAR-006
+  and is explicitly deferred.
 
 ## Progress log
 
@@ -355,3 +399,34 @@ For JAR-004 specifically:
 - 2026-07-30: The requested squash merge remains the final publication gate. JAR-004 must not be
   considered complete until CI also passes for this final documentation commit and the merge
   succeeds without bypassing repository protection.
+- 2026-07-30: Began JAR-005 on `feat/jar-005-conversation` after reading all required repository,
+  product, experience, frontend, voice, status, decision, task, evidence, and current-plan
+  documents. Confirmed that real providers, persistence, cognition extraction, SQLite, Obsidian,
+  and JAR-006 remain excluded.
+- 2026-07-30: Generated two Superdesign Conversation directions. The user approved A+B; the
+  implementation combines Direction A's spatial context with Direction B's editorial reading
+  rhythm while retaining repository tokens and honest Mock boundaries.
+- 2026-07-30: Added Conversation routing, three typed Chinese scenarios, editorial shared timeline,
+  contextual intersections, text composition, streaming/cancel/retry/offline/error recovery, and
+  Presence continuation without adding dependencies or preload capabilities.
+- 2026-07-30: Added default toggle capture, optional hold capture, a shared runtime preference, and
+  a four-command gesture adapter over the existing `VoiceController`.
+- 2026-07-30: Added reducer, route, scenario, option, component, IME, gesture, mode-sharing, stale
+  callback, cancellation, retry, offline, and production evidence tests. The suite contains 77
+  passing tests across 25 files.
+- 2026-07-30: Documented Original, Licensed Character, and Consented Clone Voice Profile categories,
+  explicit authorization metadata, vendor-neutral Provider bindings, and the no-unauthorized-
+  built-in-voice rule in `docs/VOICE_PROFILES.md` and ADR-0007.
+- 2026-07-30: Reworked the first Conversation preview after real 1440×900 Electron inspection
+  showed the composer obscuring the timeline. The compact input band now keeps context, readable
+  history, text, voice mode, and state visible together at desktop widths.
+- 2026-07-30: Generated nine production-Electron evidence PNGs covering all three scenarios,
+  1024×900, toggle listening, streaming, offline, error, keyboard focus, and reduced motion. Every
+  capture first returned the typed main-process health response.
+- 2026-07-30: Launched visible production Electron with renderer accessibility enabled. Verified
+  Chinese text entry and Mock response, real microphone capture entering `listening`, the second
+  toggle activation finishing capture, mode switching to hold, and keyboard-accessible controls.
+  Separately inspected 200% zoom; it uses the compact top navigation and vertical scrolling.
+- 2026-07-30: Final local format check, lint, strict typecheck, 77 tests, build, and production IPC
+  smoke all passed. The Renderer bundle is 689.62 kB. GitHub publication and CI remain the final
+  completion gate.

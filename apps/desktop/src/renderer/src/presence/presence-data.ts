@@ -8,24 +8,24 @@ import type {
 
 const explorations = [
   {
-    id: 'limits-and-freedom',
-    domain: '哲学 · 心理学',
-    title: '边界究竟限制了自由，还是让自由成为可能？',
-    summary: '从选择过载与自我约束出发，继续辨认“能够做”与“真正想做”之间的差别。',
+    id: 'uncertainty-and-crowd',
+    domain: '金融 · 心理学',
+    title: '为什么人在不确定的时候更容易跟随群体？',
+    summary: '从从众、不确定性规避与信息瀑布出发，辨认群体如何替个人承担判断压力。',
     updatedAt: '2026-07-30T08:20:00.000Z',
   },
   {
-    id: 'uncertainty-and-price',
-    domain: '经济学 · 金融',
-    title: '市场为不确定性定价时，究竟在衡量什么？',
-    summary: '把风险、模糊性与叙事预期拆开，观察价格如何容纳彼此冲突的未来。',
+    id: 'money-consensus-institution',
+    domain: '经济学 · 制度',
+    title: '货币的价值，来自共识还是制度？',
+    summary: '把信任、税收需求、国家能力与社会协调放在同一条讨论中重新观察。',
     updatedAt: '2026-07-29T13:40:00.000Z',
   },
   {
-    id: 'memory-and-self',
-    domain: '文学 · 认知',
-    title: '如果记忆持续被重写，“我”如何保持连续？',
-    summary: '沿着叙事身份与回忆偏差，重新审视一个人为何仍会相信自己是同一个人。',
+    id: 'knowledge-action-gap',
+    domain: '心理学 · 自我认知',
+    title: '为什么明白很多道理，却仍然很难改变行为？',
+    summary: '沿着即时奖励、习惯回路和自我叙事，理解知识与行动之间为何仍有距离。',
     updatedAt: '2026-07-27T10:15:00.000Z',
   },
 ] as const satisfies readonly ExplorationItem[];
