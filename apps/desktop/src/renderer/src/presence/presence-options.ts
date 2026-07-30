@@ -1,10 +1,12 @@
 import { parsePresenceVariant } from './presence-data';
 import type { PresenceVariant } from './types';
+import { parseVoiceEvidenceState, type VoiceEvidenceState } from '../voice/voice-evidence';
 
 export interface PresenceOptions {
   readonly focusTarget: boolean;
   readonly reducedMotion: boolean;
   readonly variant: PresenceVariant;
+  readonly voiceEvidence: VoiceEvidenceState | null;
 }
 
 export function parsePresenceOptions(hash: string): PresenceOptions {
@@ -15,6 +17,7 @@ export function parsePresenceOptions(hash: string): PresenceOptions {
     focusTarget: parameters.get('focus') === 'voice',
     reducedMotion: parameters.get('motion') === 'reduced',
     variant: parsePresenceVariant(parameters.get('variant')),
+    voiceEvidence: parseVoiceEvidenceState(parameters.get('voice')),
   };
 }
 

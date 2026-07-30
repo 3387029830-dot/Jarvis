@@ -39,4 +39,74 @@ export const zhCN = {
     localMockDisclosure: '当前内容为开发阶段 Mock 数据',
     reducedMotionActive: '已减少动态效果：Orb 保持静态',
   },
+  voice: {
+    cancelAction: '取消本轮',
+    demoDisclosure: '演示模式：录音与波形来自真实麦克风，转录和回答暂为模拟内容。',
+    durationLabel: '录音时长',
+    mockBadge: '演示 Mock',
+    noRoundYet: '按住后才会请求麦克风权限；应用启动时不会主动访问麦克风。',
+    privacyDetails: [
+      '麦克风只在按住期间采集。',
+      '录音不会上传，也不会写入磁盘。',
+      '松开后，音频只为本地演示流程短暂保留在内存中。',
+      '取消、错误或模拟转录生成后，临时音频会立即释放。',
+    ],
+    privacySummary: '本地音频与隐私边界',
+    responseLabel: '模拟回答',
+    retryAction: '重新尝试',
+    roundTitle: '当前语音回合',
+    state: {
+      cancelled: {
+        action: '本轮已取消',
+        detail: '录音和临时资源已经释放。',
+        label: '本轮已取消',
+      },
+      error: {
+        action: '重新尝试',
+        label: '语音暂时不可用',
+      },
+      idle: {
+        action: '按住说话',
+        detail: '按住期间采集，松开后进入本地演示流程。',
+        label: '安静待命',
+      },
+      interrupted: {
+        action: '回应已打断',
+        detail: '正在准备新的语音输入。',
+        label: '回应已打断',
+      },
+      listening: {
+        action: '松开发送',
+        detail: '按 Esc 取消',
+        label: '正在聆听',
+      },
+      permissionRequest: {
+        action: '正在请求麦克风权限',
+        detail: '请在系统提示中选择是否允许；此刻尚未开始录音。',
+        label: '正在请求麦克风权限',
+      },
+      respondingText: {
+        action: '正在形成回答',
+        detail: '回答正在以确定性片段显示。',
+        label: '正在形成回答',
+      },
+      speaking: {
+        action: 'Jarvis 正在回应',
+        detail: '再次按住即可打断',
+        label: '正在本地播放演示回应',
+      },
+      transcribing: {
+        action: '正在生成模拟转录',
+        detail: '录音已停止，临时音频将在模拟转录生成后释放。',
+        label: '正在生成模拟转录',
+      },
+      understanding: {
+        action: '正在整理问题',
+        detail: '当前理解过程为确定性的本地 Mock。',
+        label: '正在整理问题',
+      },
+    },
+    transcriptLabel: '模拟转录',
+    useTextAction: '继续使用文字',
+  },
 } satisfies ProductCopy;

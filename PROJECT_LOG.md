@@ -180,3 +180,73 @@ JAR-003：实现 App Shell 与 Presence「此刻」页面。
 ### 下一步
 
 JAR-004：接通真实麦克风权限、按住说话与语音状态机，并用确定性 Mock provider 验证录音、取消、错误恢复和打断。不得在 JAR-003 中提前实现。
+
+---
+
+## 2026-07-30 — JAR-004 语音状态机与 Mock 闭环
+
+### 本次目标
+
+建立第一条诚实、可取消、可恢复的语音交互闭环：真实麦克风录音与波形进入确定性 Mock 转录、理解、文字回答和本地播放。
+
+### 实现内容
+
+- 新增单一来源的强类型 reducer 与 `VoiceController`，覆盖九个 canonical phase 和独立权限状态。
+- 每轮使用递增 `sessionId`，过期权限、录音、Mock chunk 和播放回调不会写入新一轮。
+- 新增真实 `getUserMedia`、`MediaRecorder`、MIME 选择、Web Audio analyser、时长、300ms 最短与 60 秒最长边界。
+- 支持 pointerdown / pointerup / pointercancel、pointer capture、Space / Enter 按住、key repeat 防重、Escape 与窗口失焦取消。
+- 新增确定性模拟转录、理解延迟、中文回答分段输出。
+- 新增本地 speechSynthesis 播放；系统语音不可用时使用 Web Audio 生成的温和确定性短音。
+- 新增 speaking 再次按住的即时停止与新录音会话。
+- Presence 新增紧凑“当前语音回合”，持续显示真实 / Mock 边界、阶段、时长、波形、转录、回答、取消与错误恢复。
+- Orb、主按钮、状态文字、波形和当前回合全部从同一状态快照派生。
+- 保持 preload 只有 health-check；音频不经 IPC、不上传、不写盘。
+- 新增 reducer、控制器、录音边界、Mock loop、本地播放、交互与证据状态测试。
+
+### 用户现在能做什么
+
+- 首次按住时请求真实 Windows 麦克风权限。
+- 允许后查看真实音量波形与录音时长，松开进入完整本地演示流程。
+- 使用鼠标、触控、Space 或 Enter 按住说话。
+- 在录音或处理中按 Escape 取消。
+- 在 Jarvis 本地播放时再次按住，立即打断并开始下一次录音。
+- 在权限拒绝、设备缺失、能力缺失、过短录音和播放失败后查看中文说明并恢复。
+
+### 用户仍不能做什么
+
+- 不能获得真实 STT 转录、模型理解或模型回答。
+- 不能使用云端 TTS；仓库没有 API Key。
+- 不能保存录音、语音回合、对话或认知数据。
+- 不能进入正式 Conversation、星图、演变、档案或设置页面。
+
+### 验证结果
+
+- format、lint、strict typecheck：本地通过。
+- test：本地通过，21 个文件共 63 项。
+- build：本地通过。
+- smoke：本地通过，生产 Electron 返回 `{"process":"main","status":"ok"}`。
+- 人工验收：真实权限 requesting、真实 listening 波形、松开后的 Mock 全链、speaking 打断、Escape 清理均通过。
+- 视觉：1440×900 七种状态与 1024×900 listening 均已检查；200% 缩放依赖纵向滚动但可操作。
+- GitHub CI：待 Draft PR 创建后执行，不以此状态标记任务完成。
+
+### 视觉证据
+
+- `artifacts/jar-004/voice-idle-1440x900.png`
+- `artifacts/jar-004/voice-listening-1440x900.png`
+- `artifacts/jar-004/voice-transcribing-1440x900.png`
+- `artifacts/jar-004/voice-responding-1440x900.png`
+- `artifacts/jar-004/voice-speaking-1440x900.png`
+- `artifacts/jar-004/voice-permission-denied-1440x900.png`
+- `artifacts/jar-004/voice-reduced-motion-1440x900.png`
+- `artifacts/jar-004/voice-listening-1024x900.png`
+
+### 已知问题
+
+- 系统中文语音包不可用时只能播放短音回退，文字回答仍完整保留。
+- Windows 首次权限提示可能抢走焦点；应用会保持 requesting，并安全处理提前松开和迟到 stream。
+- Renderer bundle 约 657 kB，需要在 JAR-005 继续关注。
+- 当前轮刷新即消失，不保存历史。
+
+### 下一步
+
+JAR-005：实现正式 Conversation 空间。本轮到此停止，不创建 JAR-005 分支。

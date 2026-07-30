@@ -8,6 +8,9 @@ import { createPresenceViewModel } from './presence-data';
 import { parsePresenceOptions, resolveOrbMotion } from './presence-options';
 import { PresenceOrb } from './PresenceOrb';
 import type { ExplorationItem } from './types';
+import { VoiceInteraction } from '../voice/VoiceInteraction';
+import { createVoiceEvidenceState } from '../voice/voice-evidence';
+import { useVoiceController } from '../voice/use-voice-controller';
 
 function Timestamp({ value }: { value: string }): React.JSX.Element {
   return (
@@ -47,6 +50,10 @@ export function PresencePage(): React.JSX.Element {
   const [selectedTitle, setSelectedTitle] = useState<string>('');
   const [question, setQuestion] = useState('');
   const voiceButtonRef = useRef<HTMLButtonElement>(null);
+  const voiceController = useVoiceController();
+  const voiceState = options.voiceEvidence
+    ? createVoiceEvidenceState(options.voiceEvidence)
+    : voiceController.state;
 
   const prefersReducedMotion =
     typeof window.matchMedia === 'function' &&
@@ -96,11 +103,6 @@ export function PresencePage(): React.JSX.Element {
     setLocalResponse(copy.presence.questionResponse);
   }
 
-  function handleVoiceAttempt(): void {
-    setSelectedTitle('');
-    setLocalResponse(copy.presence.voiceResponse);
-  }
-
   const hasCognitionContent =
     model.explorations.length > 0 ||
     model.unresolvedQuestions.length > 0 ||
@@ -119,7 +121,7 @@ export function PresencePage(): React.JSX.Element {
               <p className="presence-hero__motion-note">{copy.presence.reducedMotionActive}</p>
             ) : null}
           </div>
-          <PresenceOrb motion={orbMotion} />
+          <PresenceOrb motion={orbMotion} state={voiceState} />
         </header>
 
         <section aria-label="提问入口" className="presence-entry">
@@ -138,21 +140,15 @@ export function PresencePage(): React.JSX.Element {
               </Button>
             </div>
           </form>
-
-          <div className="presence-voice">
-            <Button
-              aria-describedby="voice-disclosure"
-              data-visual-state={options.focusTarget ? 'focus' : undefined}
-              onClick={handleVoiceAttempt}
-              ref={voiceButtonRef}
-              size="large"
-            >
-              <span className="presence-voice__pulse" aria-hidden="true" />
-              {copy.presence.voiceAction}
-            </Button>
-            <p id="voice-disclosure">{copy.presence.voiceDisclosure}</p>
-          </div>
         </section>
+
+        <VoiceInteraction
+          controller={voiceController}
+          isEvidence={options.voiceEvidence !== null}
+          reducedMotion={prefersReducedMotion || options.reducedMotion}
+          state={voiceState}
+          voiceButtonRef={voiceButtonRef}
+        />
 
         {localResponse ? (
           <output className="presence-local-response" aria-live="polite">

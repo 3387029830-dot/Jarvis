@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  window.location.hash = '#/presence?variant=populated';
+  window.location.hash = '#/presence?variant=populated&voice=idle';
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     value: vi.fn().mockReturnValue({ matches: false }),
@@ -51,11 +51,10 @@ describe('Jarvis application routing and Presence behavior', () => {
     }
     await user.click(firstContinueButton);
 
-    expect(screen.getByRole('status').textContent).toContain('本轮不会调用模型或保存数据');
+    expect(screen.getByText(/本轮不会调用模型或保存数据/)).toBeTruthy();
   });
 
-  it('does not request microphone access when the voice affordance is pressed', async () => {
-    const user = userEvent.setup();
+  it('does not request microphone access on startup and discloses the real/Mock boundary', () => {
     const getUserMedia = vi.fn();
     Object.defineProperty(window.navigator, 'mediaDevices', {
       configurable: true,
@@ -63,9 +62,8 @@ describe('Jarvis application routing and Presence behavior', () => {
     });
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: /按住说话/ }));
-
     expect(getUserMedia).not.toHaveBeenCalled();
-    expect(screen.getByRole('status').textContent).toContain('没有访问麦克风');
+    expect(screen.getByText(/录音与波形来自真实麦克风/)).toBeTruthy();
+    expect(screen.getByText(/应用启动时不会主动访问麦克风/)).toBeTruthy();
   });
 });
