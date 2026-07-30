@@ -58,6 +58,17 @@ For the current JAR-002 milestone:
 - Presence, the application shell, Orb, voice state, conversation, persistence, cognition, and
   provider behavior remain excluded.
 
+For the current JAR-003 milestone:
+
+- the formal product shell and `#/presence` page become the default user experience;
+- all visible product copy is Simplified-Chinese-first and comes from a typed `zh-CN` catalog;
+- Presence uses typed mock view-models for empty, single, and populated development states;
+- the Orb represents only an honest `idle` presence state with reduced-motion and static fallbacks;
+- “continue exploring,” first-exploration, and text-entry affordances produce deterministic
+  page-local feedback without opening an unfinished Conversation page;
+- microphone capture, voice state transitions, providers, persistence, cognition extraction,
+  Constellation, Evolution, Archive, and Settings implementations remain excluded.
+
 ## Architecture
 
 - Electron main/preload/renderer separation.
@@ -86,6 +97,20 @@ JAR-002 implementation details:
   not a product route or Presence screen.
 - Add an optional smoke evidence mode that can set viewport size and showcase state without
   expanding the preload bridge.
+
+JAR-003 implementation details:
+
+- Keep the renderer dependency-light: use the existing hash entry to select `#/presence` and the
+  development-only `#/design-system` route without adding a router package.
+- Add a typed `zh-CN` copy catalog and locale-aware date formatting through `Intl.DateTimeFormat`.
+- Place the formal shell and Presence view under dedicated renderer directories, reusing JAR-002
+  tokens and primitives instead of introducing parallel styling.
+- Keep navigation items for unfinished spaces visibly disabled, with inline Chinese availability
+  text and supplementary Tooltips; no dead routes or placeholder pages are created.
+- Extend smoke evidence options only with renderer route, mock variant, focus, motion, and zoom
+  controls. The preload bridge remains unchanged.
+- Treat the mock cognition-change text as a provisional view explicitly in copy and visuals; no
+  cognition item is persisted or promoted to a user belief.
 
 ## Milestones
 
@@ -126,6 +151,17 @@ For JAR-002 specifically:
 - Verify keyboard traversal, Dialog focus trap/return, Escape close, overflow behavior, Chinese and
   mixed-language typography, hover/active/error/loading/disabled states, and reduced motion.
 
+For JAR-003 specifically:
+
+- Run format, lint, strict typecheck, all unit/component tests, production build, and the existing
+  IPC smoke.
+- Test typed copy, empty/single/populated view models, current and disabled navigation behavior,
+  deterministic “continue exploring,” honest inactive voice affordance, and reduced-motion logic.
+- Inspect Presence at 1440×900 and 1024×900, plus populated, single, empty, keyboard-only,
+  reduced-motion, and 200% zoom states.
+- Capture the six required Presence/showcase PNGs and the evidence manifest in
+  `artifacts/jar-003/`.
+
 ## Risks and decisions
 
 - WebGL Orb can delay the vertical slice. Implement a semantic 2D fallback first if WebGL blocks interaction work.
@@ -140,6 +176,28 @@ For JAR-002 specifically:
   preload bridge remains the single health-check method introduced by JAR-001.
 - System-font rendering may vary slightly outside Windows. Chinese acceptance is based on the
   Windows-first font stack required by the current desktop target.
+- JAR-003 keeps the Orb as a CSS/SVG idle-state representation. This avoids introducing WebGL or a
+  voice animation architecture before JAR-004 provides the canonical state machine.
+- Hash-based development variants are intentionally small and deterministic; they are evidence
+  controls, not product settings or a general routing abstraction.
+
+## JAR-003 deviations and rationale
+
+- The original foundation narrative described real microphone capture and a deterministic spoken
+  loop in one broad plan. JAR-003 deliberately stops before those steps because `docs/CODEX_TASKS.md`
+  assigns them to JAR-004. The current voice affordance therefore returns an explicit local
+  “not recording” message and never calls `getUserMedia`.
+- The approved Superdesign draft used dashboard-like equal cards, an active settings link, English
+  synthesis labels, and wording that implied background cognition. Implementation retained its
+  calm composition and spatial Orb direction but replaced those elements with editorial sections,
+  disabled future navigation, Chinese-first copy, and honest Mock disclosures.
+- A CSS Orb was selected instead of React Three Fiber. Only the idle semantic state exists in
+  JAR-003, so WebGL would add bundle and accessibility cost before the JAR-004 state machine defines
+  the real visual contract.
+- The repository continues to use the small hash selector instead of adding React Router. There are
+  only two renderer destinations, and the design-system route remains development-only.
+- No new runtime dependency was required. Existing React, browser APIs, CSS tokens, and primitives
+  cover the complete slice.
 
 ## Progress log
 
@@ -174,3 +232,28 @@ For JAR-002 specifically:
 - 2026-07-29: Completed the final JAR-002 quality gate: format check, lint, strict typecheck, 18
   tests, production build, and `pnpm smoke` all passed. The final smoke returned
   `{"process":"main","status":"ok"}`; JAR-002 is complete and work stopped before JAR-003.
+- 2026-07-30: Began JAR-003 on `feat/jar-003-presence` after reading the repository instructions,
+  product, experience, frontend, voice, task, current-plan, architecture, roadmap, cognition, ADR,
+  JAR-002 evidence, Superdesign context, and the complete task attachment. Confirmed that JAR-004
+  voice capture/state/provider work remains explicitly excluded.
+- 2026-07-30: Generated Superdesign Presence draft
+  `9962bb3f-9bc1-4823-8d17-5d40338036c2` from the approved JAR-002 source and existing renderer
+  files. The user approved the visual direction before implementation.
+- 2026-07-30: Added the typed Simplified-Chinese copy catalog, zh-CN Intl formatting, typed
+  empty/single/populated Presence view-models, the compact application shell, disabled future
+  navigation, page-local continuation/text feedback, and an honest inactive voice affordance.
+- 2026-07-30: Added the semantic idle Orb with reduced-motion and constrained-hardware static
+  fallbacks. The preload API remains the single JAR-001 health check; no microphone, provider,
+  persistence, or hidden Node capability was introduced.
+- 2026-07-30: Revised the development showcase toward Chinese-first copy and established
+  `docs/COPY_GUIDE_ZH_CN.md` plus ADR-0005 for the long-term language decision.
+- 2026-07-30: Added tests for locale copy, zh-CN formatting, view-model variants, evidence routing,
+  navigation active/disabled behavior, local continuation, inactive voice behavior, and Orb motion.
+  The suite contains 32 passing tests across 14 files.
+- 2026-07-30: Launched production Electron repeatedly and confirmed the typed IPC response while
+  inspecting 1440×900, 1024×900, populated, single, empty, keyboard-focus, reduced-motion, and 200%
+  zoom states. Six final screenshots are documented under `artifacts/jar-003/`; temporary single
+  and zoom inspection images remain outside the evidence directory.
+- 2026-07-30: Local format, lint, strict typecheck, test, build, and Electron smoke gates passed.
+  Draft PR #1 was created and GitHub Actions `Quality gates` run `30510759971` completed
+  successfully for the implementation commit.

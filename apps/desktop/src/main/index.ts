@@ -77,16 +77,21 @@ async function createMainWindow(): Promise<BrowserWindow> {
   });
 
   const rendererUrl = process.env.ELECTRON_RENDERER_URL;
-  const showcaseHash = createShowcaseHash(showcaseEvidence);
+  const evidenceHash = createShowcaseHash(showcaseEvidence);
 
   if (rendererUrl) {
-    await window.loadURL(`${rendererUrl}#${showcaseHash}`);
+    const rendererHash = showcaseEvidence.enabled ? evidenceHash : '/presence';
+    await window.loadURL(`${rendererUrl}#${rendererHash}`);
   } else if (showcaseEvidence.enabled) {
     await window.loadFile(path.join(__dirname, '../renderer/index.html'), {
-      hash: showcaseHash,
+      hash: evidenceHash,
     });
   } else {
     await window.loadFile(path.join(__dirname, '../renderer/index.html'));
+  }
+
+  if (showcaseEvidence.zoomFactor !== 1) {
+    window.webContents.setZoomFactor(showcaseEvidence.zoomFactor);
   }
 
   if (isSmokeTest) {

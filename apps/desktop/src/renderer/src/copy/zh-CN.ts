@@ -1,0 +1,42 @@
+import type { ProductCopy } from './types';
+
+export const zhCN = {
+  app: {
+    name: 'Jarvis',
+    descriptor: '私人认知观测空间',
+  },
+  navigation: {
+    label: '主要导航',
+    current: '此刻',
+    conversation: '对话',
+    map: '星图',
+    evolution: '演变',
+    archive: '档案',
+    settings: '设置',
+    unavailable: '后续开放',
+    unavailableDescription: '此入口将在后续阶段开放，当前不可使用。',
+  },
+  presence: {
+    eyebrow: '此刻 · 安静待命',
+    activeExplorations: '正在探索',
+    unresolvedQuestions: '尚未解开的疑问',
+    recentCognition: '最近的认知变化',
+    continueExploration: '继续探索',
+    continueResponse: '已在当前页面展开这条探索线索。本轮不会调用模型或保存数据。',
+    provisional: '待确认 · 暂存观察',
+    updatedAt: '更新于',
+    emptyTitle: '这里还没有被保留的探索。',
+    emptyBody: '当一次对话真正改变了你的理解，Jarvis 才会邀请你确认并把它留在这里。',
+    emptyHint: '你仍然可以先写下一个问题；本轮内容只停留在当前页面。',
+    questionLabel: '写下一个问题',
+    questionPlaceholder: '此刻，你想继续想清楚什么？',
+    questionAction: '暂存问题',
+    questionResponse: '问题已暂存在当前页面。关闭应用后不会保留，也不会发送给任何服务。',
+    voiceAction: '按住说话',
+    voiceDisclosure: '下一阶段接通 · 当前不会录音',
+    voiceResponse: '语音尚未接通，本轮没有访问麦克风，也没有录制任何内容。',
+    idleState: 'Jarvis 在场状态：安静待命',
+    localMockDisclosure: '当前内容为开发阶段 Mock 数据',
+    reducedMotionActive: '已减少动态效果：Orb 保持静态',
+  },
+} satisfies ProductCopy;
