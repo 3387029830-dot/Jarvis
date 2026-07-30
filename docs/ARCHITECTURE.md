@@ -132,3 +132,33 @@ Migrations must be versioned and tested. Development must use a disposable datab
 - External navigation denied by default and opened through controlled handlers.
 - No arbitrary shell tool.
 - Logs redact secrets and do not include raw private conversations by default.
+
+## 10. JAR-006A Provider boundary
+
+```text
+Settings / Conversation renderer
+  → narrow typed preload methods
+  → runtime-validated IPC handlers
+  → ProviderService in Electron main
+  → OpenAICompatibleConversationProvider
+  → HTTPS (or explicit localhost development exception)
+```
+
+- `apps/desktop/src/shared/provider.ts` is the cross-process contract. It contains public
+  configuration, request/event and error types but no credential-returning API.
+- `ProviderConfigStore` writes `provider-config.v1.json` under Electron userData. Only the API Key
+  ciphertext produced by `safeStorage` is stored; the Renderer receives `hasCredential` and
+  `keySuffix`.
+- `ProviderService` owns connection tests, the real-mode gate, prompt assembly and Provider
+  selection. Conversation does not import Provider implementation code.
+- `OpenAICompatibleConversationProvider` implements Chat Completions SSE with manual redirect
+  handling, timeout, cancellation, cumulative response limit and usage events. It emits content
+  only; Provider reasoning fields are ignored.
+- Streaming events carry `requestId`. Main keys active abort controllers by Renderer WebContents
+  ID plus request ID, and preload exposes an unsubscribe function rather than generic event access.
+- Settings is lazy-loaded. The JAR-006A build produces a 700.70 kB Renderer entry plus a 15.58 kB
+  Settings JS chunk and 5.99 kB Settings CSS chunk. Provider code is in the main bundle; no Provider
+  SDK was added to Renderer.
+- Conversation was assessed for splitting but remains in the entry bundle because it shares the
+  current voice controller, evidence states and shell. Reassess after voice orchestration is
+  extracted rather than introducing lifecycle risk in this slice.

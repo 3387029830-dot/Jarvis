@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, safeStorage } from 'electron';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -7,6 +7,10 @@ import { resolveUserDataPath } from './data-path';
 import { registerHealthCheckHandler } from './health-handler';
 import { createShowcaseHash, resolveShowcaseEvidenceOptions } from './showcase-evidence';
 import { createWindowOptions } from './window-options';
+import { OpenAICompatibleConversationProvider } from './providers/openai-compatible-provider';
+import { ProviderConfigStore } from './providers/provider-config-store';
+import { registerProviderHandlers } from './providers/provider-ipc';
+import { ProviderService } from './providers/provider-service';
 
 const isSmokeTest = process.env.JARVIS_SMOKE_TEST === '1';
 const showcaseEvidence = resolveShowcaseEvidenceOptions(process.env);
@@ -39,6 +43,12 @@ async function verifyRendererBridge(window: BrowserWindow): Promise<void> {
     }
 
     console.log(`JARVIS_IPC_SMOKE_OK ${JSON.stringify(result)}`);
+
+    if (process.env.JARVIS_PROVIDER_ACCEPTANCE === '1') {
+      const { runProviderAcceptance } = await import('./providers/provider-acceptance');
+      const acceptance = await runProviderAcceptance(window);
+      console.log(`JARVIS_PROVIDER_ACCEPTANCE_OK ${JSON.stringify(acceptance)}`);
+    }
 
     const screenshotPath = process.env.JARVIS_SMOKE_SCREENSHOT;
     if (screenshotPath) {
@@ -103,6 +113,11 @@ async function createMainWindow(): Promise<BrowserWindow> {
 
 app.whenReady().then(async () => {
   registerHealthCheckHandler(ipcMain);
+  const providerStore = new ProviderConfigStore(app.getPath('userData'), safeStorage);
+  registerProviderHandlers(
+    ipcMain,
+    new ProviderService(providerStore, new OpenAICompatibleConversationProvider()),
+  );
   await createMainWindow();
 
   app.on('activate', () => {

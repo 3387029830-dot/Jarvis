@@ -15,12 +15,17 @@ export type ConversationAction =
       readonly responseId: string;
       readonly sessionId: number;
       readonly source: ConversationSource;
+      readonly responseIsMock?: boolean;
       readonly userId: string;
     }
   | { readonly type: 'response-chunk'; readonly chunk: string; readonly sessionId: number }
   | { readonly type: 'response-complete'; readonly sessionId: number }
   | { readonly type: 'response-cancelled'; readonly sessionId: number }
-  | { readonly type: 'response-failed'; readonly sessionId: number }
+  | {
+      readonly type: 'response-failed';
+      readonly error?: import('../../../shared/provider').ProviderError;
+      readonly sessionId: number;
+    }
   | {
       readonly type: 'retry';
       readonly responseId: string;
@@ -144,7 +149,7 @@ export function conversationReducer(
             content: '',
             createdAt: action.createdAt,
             id: action.responseId,
-            isMock: true,
+            isMock: action.responseIsMock ?? true,
             role: 'jarvis',
             source: action.source,
             status: 'streaming',
@@ -170,9 +175,21 @@ export function conversationReducer(
         ? updateActiveTurn(state, 'cancelled')
         : state;
     case 'response-failed':
-      return action.sessionId === state.lastTextSessionId
-        ? updateActiveTurn(state, 'failed')
-        : state;
+      if (action.sessionId !== state.lastTextSessionId || !state.activeResponseId) {
+        return state;
+      }
+      return {
+        ...updateActiveTurn(state, 'failed'),
+        turns: state.turns.map((turn) =>
+          turn.id === state.activeResponseId
+            ? {
+                ...turn,
+                ...(action.error === undefined ? {} : { providerError: action.error }),
+                status: 'failed',
+              }
+            : turn,
+        ),
+      };
     case 'retry':
       if (action.sessionId <= state.lastTextSessionId) {
         return state;
@@ -181,9 +198,14 @@ export function conversationReducer(
         ...state,
         activeResponseId: action.responseId,
         lastTextSessionId: action.sessionId,
-        turns: state.turns.map((turn) =>
-          turn.id === action.responseId ? { ...turn, content: '', status: 'streaming' } : turn,
-        ),
+        turns: state.turns.map((turn) => {
+          if (turn.id !== action.responseId) {
+            return turn;
+          }
+          const { providerError: omittedProviderError, ...rest } = turn;
+          void omittedProviderError;
+          return { ...rest, content: '', status: 'streaming' };
+        }),
       };
     case 'voice-snapshot':
       return syncVoiceSnapshot(state, action.snapshot);

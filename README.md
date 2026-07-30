@@ -7,7 +7,7 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 ## 当前版本
 
 - 软件包版本：`0.1.0`
-- 当前里程碑：**JAR-005 — 沉浸式 Conversation 空间**
+- 当前里程碑：**JAR-006A — Provider 基础与真实文字对话路径（已完成）**
 - 产品默认语言：简体中文
 - 当前真实能力与 Mock 边界：[docs/STATUS.md](docs/STATUS.md)
 
@@ -27,14 +27,23 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 - [x] 语音与文字共用的编辑性对话时间线
 - [x] 点击说话（默认）与按住说话（可选）两种共享交互模式
 - [x] Conversation 流式、取消、重试、离线和错误状态
+- [x] OpenAI-compatible Conversation Provider、Chat Completions SSE 与统一错误契约
+- [x] main-process Provider 网络边界、typed streaming IPC 与 `requestId` 隔离
+- [x] `safeStorage` 加密凭据、脱敏展示、删除凭据与版本化配置
+- [x] 中文 Provider 设置页、Mock / real 模式和连接测试
+- [x] 真实文字回答进入现有 Conversation 编辑性时间线
 - [x] reduced-motion 与低性能静态 Orb 回退
 - [x] format、lint、typecheck、test、build、smoke 与 GitHub CI
 
 ## 正在开发
 
-本轮完成 **JAR-005：Conversation 空间**。下一项计划是 **JAR-006：Provider contracts 与一条真实语音路径**；本轮没有接入真实 STT、模型或云端 TTS。
+**JAR-006A：Provider 基础与真实文字对话路径** 已完成。项目所有者已在应用内使用自己的
+OpenAI-compatible Provider 验证连接、中文流式回答、取消、滚动稳定性、草稿保留、配置
+重启恢复与 Key 脱敏；流式生成不会重新排列输入框、Orb 或语音区。
 
-默认“点击说话”会在用户直接操作后请求真实麦克风权限，第二次点击结束录音；也可切换为按住模式。转录、理解与回答仍是明确标注的本地 Mock。Conversation 历史来自固定场景，刷新后不会持久化。请以 [docs/STATUS.md](docs/STATUS.md) 为当前真实功能清单。
+下一项计划是 JAR-006B，但尚未创建分支或开始实现。
+
+本轮只接通文字模型；真实 STT、真实 TTS、Voice Profile Provider binding、持久化和认知提取仍未实现。默认语音入口仍使用真实本地录音加明确标注的 Mock 转录与回答。请以 [docs/STATUS.md](docs/STATUS.md) 为当前真实功能清单。
 
 ## 如何启动
 
@@ -66,7 +75,18 @@ corepack pnpm dev
 - `#/conversation?exploration=uncertainty-and-crowd`
 - `#/conversation?exploration=money-consensus-institution`
 - `#/conversation?exploration=knowledge-action-gap`
+- `#/settings`
 - `#/design-system`
+
+配置真实文字 Provider：
+
+1. 打开“设置”，填写 OpenAI-compatible Base URL、模型 ID 和 API Key。
+2. 先点击“测试连接”；选择“真实文字回答”并保存时会再次测试，失败不会切换到 Mock。
+3. 保存后完整 Key 不再回显，只显示末四位；删除凭据会恢复为 Mock。
+4. 回到 Conversation 发送中文文字，回答会通过 SSE 增量进入时间线；生成中可取消。
+
+如需不使用真实凭据验证本地链路，可在另一个终端运行 `corepack pnpm provider:fake`，
+并在设置页使用 `http://localhost:4317/v1`、模型 `jarvis-local-fake` 和任意测试 Key。
 
 体验语音闭环：
 
@@ -95,7 +115,10 @@ corepack pnpm smoke
 3. JAR-003：App Shell 与 Presence — 已完成
 4. JAR-004：语音状态机与 Mock 闭环 — 已完成
 5. JAR-005：Conversation 空间 — 已完成
-6. JAR-006：Provider contracts 与一条真实语音路径 — 下一步
+6. JAR-006：Provider contracts 与一条真实语音路径
+   - JAR-006A：Provider 基础与真实文字对话 — 已完成
+   - JAR-006B：真实 STT — 未开始
+   - JAR-006C：真实 TTS 与 Voice Profile binding — 未开始
 7. JAR-007 及以后：本地持久化、认知事件、星图、演变与 Obsidian 导出
 
 ## 项目文档
@@ -106,6 +129,8 @@ corepack pnpm smoke
 - [简体中文文案规范](docs/COPY_GUIDE_ZH_CN.md)
 - [语音体验规范](docs/VOICE_SPEC.md)
 - [声线配置契约](docs/VOICE_PROFILES.md)
+- [Provider 配置与适配器](docs/PROVIDERS.md)
+- [安全模型](docs/SECURITY_MODEL.md)
 - [当前真实状态](docs/STATUS.md)
 - [执行任务](docs/CODEX_TASKS.md)
 - [项目日志](PROJECT_LOG.md)

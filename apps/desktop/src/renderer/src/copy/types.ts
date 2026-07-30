@@ -16,8 +16,10 @@ export interface ProductCopy {
   };
   readonly conversation: {
     readonly backToPresence: string;
+    readonly backToLatest: string;
     readonly cancelled: string;
     readonly composerHint: string;
+    readonly composerStreamingHint: string;
     readonly composerLabel: string;
     readonly composerPlaceholder: string;
     readonly contextTitle: string;
@@ -28,6 +30,7 @@ export interface ProductCopy {
     readonly offlineTitle: string;
     readonly retry: string;
     readonly send: string;
+    readonly stopGenerating: string;
     readonly sourceText: string;
     readonly sourceVoice: string;
     readonly stopped: string;

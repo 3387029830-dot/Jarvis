@@ -91,6 +91,38 @@ Create an immersive conversation view rather than a generic bubble chat.
 
 Replace mocks behind interfaces without changing the UI contract.
 
+JAR-006 is delivered in three ordered sub-issues. Completing JAR-006A does not complete the parent
+issue and does not authorize work on JAR-006B or JAR-006C.
+
+### JAR-006A — Provider foundation and real conversation path
+
+- Vendor-neutral Conversation Provider contract and one OpenAI-compatible Chat Completions SSE
+  adapter.
+- Main-process networking, typed streaming IPC, request isolation, cancellation, timeout, response
+  limits, URL policy and categorized Provider errors.
+- OS-backed encrypted credentials, public masked configuration, deletion and versioned config.
+- Chinese Settings route with Mock / real mode, connection test and explicit recovery.
+- Real text responses enter the existing Conversation timeline without real STT, TTS, persistence
+  or cognition extraction.
+- Local fake Provider acceptance is automated; completion and merge additionally require the
+  project owner to confirm a real Provider test.
+- Status: completed on 2026-07-31 after project-owner real Provider and composer-stability
+  acceptance. This does not authorize JAR-006B or JAR-006C work.
+
+### JAR-006B — Real speech-to-text path
+
+- Introduce the vendor-neutral STT contract and one authorized real Chinese STT adapter.
+- Move only the required audio boundary to main while preserving cancellation, privacy disclosure
+  and the existing voice state machine.
+- Do not add real TTS or Voice Profile installation.
+
+### JAR-006C — Real text-to-speech and Voice Profile binding
+
+- Introduce the vendor-neutral TTS contract and one real Chinese TTS adapter.
+- Bind Original, Licensed Character and Consented Clone profiles through Provider binding and
+  authorization metadata.
+- Preserve readable text and interruption when synthesis is unavailable.
+
 ### Acceptance criteria
 
 - Vendor-neutral STT, conversation, and TTS interfaces.

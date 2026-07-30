@@ -14,6 +14,7 @@ describe('visual evidence options', () => {
       presenceVariant: 'populated',
       reducedMotion: false,
       route: 'design-system',
+      settingsState: 'empty',
       voiceState: 'live',
       width: 1280,
       zoomFactor: 1,
@@ -69,5 +70,14 @@ describe('visual evidence options', () => {
     expect(createShowcaseHash(result)).toBe(
       '/conversation?exploration=knowledge-action-gap&state=offline&voice=listening&focus=composer',
     );
+  });
+
+  it('creates deterministic Settings evidence states', () => {
+    const result = resolveShowcaseEvidenceOptions({
+      JARVIS_EVIDENCE: '1',
+      JARVIS_EVIDENCE_ROUTE: 'settings',
+      JARVIS_SETTINGS_STATE: 'configured',
+    });
+    expect(createShowcaseHash(result)).toBe('/settings?state=configured');
   });
 });

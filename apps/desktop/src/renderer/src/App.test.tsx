@@ -40,11 +40,12 @@ describe('Jarvis application routing and Presence behavior', () => {
 
     expect(screen.getByRole('link', { name: /此刻/ }).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('link', { name: /对话/ }).getAttribute('aria-current')).toBeNull();
-    for (const label of ['星图', '演变', '档案', '设置']) {
+    for (const label of ['星图', '演变', '档案']) {
       expect(
         (screen.getByRole('button', { name: new RegExp(label) }) as HTMLButtonElement).disabled,
       ).toBe(true);
     }
+    expect(screen.getByRole('link', { name: /设置/ }).getAttribute('href')).toBe('#/settings');
   });
 
   it('continues an exploration in the matching Conversation route', async () => {

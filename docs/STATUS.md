@@ -1,16 +1,16 @@
 # Jarvis 当前状态
 
-最后更新：2026-07-30
+最后更新：2026-07-31
 
-当前版本：`0.1.0` / JAR-005
+当前版本：`0.1.0` / JAR-006A
 
-当前阶段：沉浸式 Conversation 与共享语音交互完成，等待进入 JAR-006
+当前阶段：JAR-006A 已完成；真实 Provider 与 composer 稳定性最终验收通过，JAR-006B 尚未开始
 
 ## 已真实实现
 
 - Electron 桌面应用可以启动。
 - main / preload / renderer 保持安全隔离，renderer 未获得 Node 能力。
-- preload 只公开强类型 `window.jarvis.healthCheck()`。
+- preload 公开最小强类型 health、Provider 配置和 Conversation streaming API；没有通用 IPC。
 - 简体中文优先的设计系统、中文字体栈和中英文混排规范。
 - Button、IconButton、Panel、Card、Badge、Tooltip、Dialog、ScrollArea 等基础组件。
 - 中文 App Shell、当前导航状态与不可用入口说明。
@@ -21,6 +21,23 @@
 - 文字输入支持中文输入法组合、Enter 发送、Shift+Enter 换行。
 - 语音与文字共用同一条 typed timeline，并保留来源、时间和 Mock 标记。
 - Conversation 的流式输出、取消、相同回答重试、离线与可恢复错误状态。
+- OpenAI-compatible Chat Completions SSE 适配器，支持自定义 Base URL、Bearer、timeout、取消、usage 与响应上限。
+- Jarvis 中文系统提示会携带当前探索、领域和有限最近回合，不请求或展示模型隐藏推理。
+- Provider URL 安全规则：远程只允许 HTTPS，localhost 开发例外，拒绝 URL 凭据、查询和重定向。
+- Provider 网络请求与完整凭据只存在于 main process。
+- API Key 使用 Electron `safeStorage` 加密写入 userData 下版本化配置；Renderer 只看到是否保存和末四位。
+- 中文“设置”页支持连接测试、保存、删除、Mock / real 切换与分类错误。
+- real 模式的文字回答通过 typed IPC 增量进入既有编辑性时间线；取消会中止 fetch，重试不复制用户消息。
+- Conversation 输入区使用 identity / text / voice 命名布局区域；发送与停止生成在同一
+  固定操作槽切换，生成、取消、失败和完成不会重新排列 Orb、文字输入或语音区域。
+- 生成期间可以预先编辑下一条草稿；Enter 不会发起第二个并发请求，取消后草稿仍保留。
+- 流式增长只滚动 Conversation 阅读区；接近底部时跟随，主动向上阅读后停止跟随并提供
+  “回到最新回答”，同时预留稳定滚动条空间。
+- 真实模式失败不会悄悄回退 Mock，固定 Mock“思维交汇”在 real 模式下被替换为能力边界说明。
+- 本地真实 HTTP 假 Provider 与 Electron 完整 IPC 链路已验证，包括加密保存、脱敏、SSE、取消和删除凭据。
+- 项目所有者已使用自己的真实 OpenAI-compatible Provider 完成最终手工验收：连接、
+  中文流式回答、开始/持续/取消/结束布局稳定、主动上滚、回到最新回答、无迟到文本、
+  草稿保留、中文输入法、无并发/重复消息、重启后配置恢复和 Key 末四位脱敏均通过。
 - 默认“点击说话”及可选“按住说话”；两种模式在 Presence 和 Conversation 间共享。
 - 手势适配层只发出 `startCapture`、`finishCapture`、`cancel`、`interruptAndCapture`，状态仍由单一 `VoiceController` 管理。
 - 用户直接按住后才请求麦克风权限；权限请求期间不会显示为正在录音。
@@ -43,6 +60,7 @@
   Conversation，但两者都不调用模型或持久化。
 - Conversation 的三个探索主题、历史消息、跨领域联系和回答均为仓库内确定性 Mock。
 - Conversation 流式输出由本地定时片段模拟；离线和错误为可重复验证状态。
+- 当设置为 Mock 模式时，Conversation 继续使用确定性本地回答，不发送 Provider 网络请求。
 - Voice Profile 摘要只展示未来契约与默认演示声线，不代表已安装真实或授权声线。
 - “模拟转录”是固定中文演示问题，不声称还原用户刚才说出的内容。
 - understanding 与回答内容是可取消的确定性 Mock。
@@ -51,14 +69,13 @@
 
 ## 尚未实现
 
-- 真实 STT、模型理解、模型回答和云端 TTS。
+- 真实 STT 和真实 TTS。
 - 对录音内容进行真实识别；当前转录是演示 Mock。
 - Conversation、消息或探索的本地持久化。
 - SQLite、本地会话持久化和认知事件。
 - 真实认知提取、用户确认与观点修订历史。
-- 星图、演变、档案和设置页面。
+- 星图、演变和档案页面。
 - Obsidian 同步或导出。
-- 真实模型、STT 或 TTS API；仓库中没有真实 API Key。
 - Voice Profile 安装、预览、授权校验或 Provider binding。
 
 ## 当前可访问和体验的页面
@@ -71,6 +88,7 @@
 - `#/conversation?exploration=uncertainty-and-crowd`：心理学 × 经济学 × 群体行为。
 - `#/conversation?exploration=money-consensus-institution`：货币 × 共识 × 制度。
 - `#/conversation?exploration=knowledge-action-gap`：知识 × 行动 × 自我叙事。
+- `#/settings`：配置、测试、启用或删除 OpenAI-compatible Conversation Provider。
 - `#/design-system`：仅开发验证使用的设计系统展示页，不出现在产品导航中。
 
 在 Presence 或 Conversation 中可体验真实录音与本地 Mock 闭环。默认点击开始、再次点击结束，也可切换到按住模式；模式会在两个页面共享。`state`、`voice` 等查询参数只用于生产 Electron 的视觉证据，不是产品设置。
@@ -78,16 +96,22 @@
 ## 已知问题
 
 - Windows 是当前主要视觉验收环境；其他系统的中文字体渲染可能略有不同。
-- Renderer 生产 bundle 约为 689.62 kB，需要在 JAR-006 前评估按路由拆分。
+- Renderer 入口 bundle 从 JAR-005 的 689.62 kB 增至约 704.65 kB；Settings 另有
+  15.58 kB JS / 5.99 kB CSS 懒加载分包。Conversation 拆分暂缓，避免在共享语音控制器上引入高风险切割。
 - 200% 缩放下布局会转为顶部精简导航并依赖纵向滚动，功能可用但信息密度明显降低。
 - speechSynthesis 的中文音色、语速和可用性受 Windows 已安装语音影响；不可用时只播放确定性短音，不会伪装成真实语音合成。
 - 首次系统权限提示可能暂时抢走应用键盘焦点；界面在权限返回前保持 requesting，提前松开后会停止迟到的 stream。
 - 没有麦克风、权限拒绝和浏览器能力缺失均有中文恢复提示，但不同 Windows 隐私设置的系统提示样式不受应用控制。
 - 所有 Presence 内容均为开发 Mock，不代表用户数据已经被保存。
 - 所有 Conversation 历史和跨领域联系均为开发 Mock，刷新后恢复到固定场景。
+- 真实 Provider 回答不会持久化，刷新后丢失；当前也不会生成认知候选。
+- 不同 OpenAI-compatible 服务对 `stream_options.include_usage` 和错误体的兼容程度可能不同。
+- 真实 Provider 最终验收已通过，但仓库、测试、截图和日志仍不得包含真实 API Key 或
+  私人 Provider 回答。
 - 浏览器 hash 路由足以覆盖当前两个产品页，但路由继续增加时应重新评估。
 - Voice Profile 当前只有文档契约；仓库不内置未经授权的具体人物或演员声音。
 
 ## 下一步
 
-JAR-006：建立 vendor-neutral Provider contracts、Voice Profile 数据契约实现与一条真实中文语音路径。凭据和网络调用必须留在 main-process service；不得改变 Conversation 核心，也不得内置未经授权的人物或演员声线。
+JAR-006A 收尾合并后，下一项建议为 JAR-006B：真实 STT。当前尚未创建 JAR-006B 分支，
+也未开始实现真实 STT 或 JAR-006C。

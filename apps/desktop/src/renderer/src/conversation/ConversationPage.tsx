@@ -41,6 +41,9 @@ function TurnBlock({
         <span>{source}</span>
         <time dateTime={turn.createdAt}>{formatTurnTime(turn.createdAt)}</time>
         {turn.isMock ? <Badge tone="warning">Mock</Badge> : null}
+        {turn.role === 'jarvis' && !turn.isMock ? (
+          <Badge tone="success">真实 Provider</Badge>
+        ) : null}
       </header>
       <div className="conversation-turn__content">
         {paragraphs.length > 0 ? (
@@ -61,8 +64,10 @@ function TurnBlock({
       {turn.status === 'failed' ? (
         <div className="conversation-turn__failure">
           <p>
-            <strong>{copy.conversation.failed}</strong>
-            {copy.conversation.errorBody}
+            <strong>{turn.providerError?.message ?? copy.conversation.failed}</strong>
+            {turn.providerError
+              ? `错误代码：${turn.providerError.code}。你的表达仍然保留，未自动切换到 Mock。`
+              : copy.conversation.errorBody}
           </p>
           <Button onClick={onRetry} size="small" variant="secondary">
             {copy.conversation.retry}
@@ -102,13 +107,18 @@ export function ConversationPage({
   const activeScenario = scenario ?? defaultConversationScenario;
   const [options] = useState(() => parseConversationOptions(window.location.hash));
   const session = useConversationSession(activeScenario, options.evidence);
+  const isRealMode = session.providerConfig?.mode === 'real';
   const syncVoice = session.syncVoice;
   const voiceController = useVoiceController();
   const [voiceMode, setVoiceMode] = useVoiceInteractionMode();
   const voiceButtonRef = useRef<HTMLButtonElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const readingRef = useRef<HTMLDivElement>(null);
+  const isNearLatestRef = useRef(true);
   const composingRef = useRef(false);
   const [draft, setDraft] = useState('');
+  const [showLatestAction, setShowLatestAction] = useState(false);
+  const isGenerating = session.state.activeResponseId !== null;
   const voiceState = options.voiceEvidence
     ? createVoiceEvidenceState(options.voiceEvidence)
     : voiceController.state;
@@ -153,16 +163,53 @@ export function ConversationPage({
     return () => window.cancelAnimationFrame(frame);
   }, [options.focusComposer]);
 
+  useEffect(() => {
+    if (!isNearLatestRef.current) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const reading = readingRef.current;
+      if (reading) {
+        reading.scrollTop = reading.scrollHeight;
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [session.state.turns]);
+
   if (!scenario) {
     return <UnknownExploration />;
   }
 
   function submitDraft(): void {
-    if (!draft.trim()) {
+    if (!draft.trim() || isGenerating) {
       return;
     }
     session.submitText(draft);
     setDraft('');
+  }
+
+  function updateReadingPosition(): void {
+    const reading = readingRef.current;
+    if (!reading) {
+      return;
+    }
+    const distanceFromLatest = reading.scrollHeight - reading.scrollTop - reading.clientHeight;
+    const isNearLatest = distanceFromLatest <= 96;
+    isNearLatestRef.current = isNearLatest;
+    setShowLatestAction(!isNearLatest);
+  }
+
+  function returnToLatest(): void {
+    const reading = readingRef.current;
+    if (!reading) {
+      return;
+    }
+    isNearLatestRef.current = true;
+    setShowLatestAction(false);
+    reading.scrollTo({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      top: reading.scrollHeight,
+    });
   }
 
   return (
@@ -175,7 +222,9 @@ export function ConversationPage({
             <h1>{activeScenario.title}</h1>
             <div>
               <span>{activeScenario.domains.join(' · ')}</span>
-              <Badge tone="warning">本地 Mock</Badge>
+              <Badge tone={isRealMode ? 'success' : 'warning'}>
+                {isRealMode ? '真实文字 Provider' : '本地 Mock'}
+              </Badge>
             </div>
           </div>
           <div className="conversation-context__voice">
@@ -191,11 +240,31 @@ export function ConversationPage({
           </aside>
         ) : null}
 
-        <div className="conversation-reading">
+        <div
+          className="conversation-reading"
+          data-testid="conversation-reading"
+          onScroll={updateReadingPosition}
+          ref={readingRef}
+        >
+          <div className="conversation-reading__latest-slot">
+            <Button
+              className="conversation-reading__latest"
+              hidden={!showLatestAction}
+              onClick={returnToLatest}
+              size="small"
+              variant="quiet"
+            >
+              {copy.conversation.backToLatest}
+            </Button>
+          </div>
           <section aria-label="对话时间线" className="conversation-timeline">
             <div className="conversation-timeline__intro">
               <span>讨论手稿</span>
-              <p>{copy.conversation.mockDisclosure}</p>
+              <p>
+                {isRealMode
+                  ? '新提交的文字会发送给已配置的 Provider；页面中标有 Mock 的既有内容仍是演示数据。'
+                  : copy.conversation.mockDisclosure}
+              </p>
             </div>
             {session.state.turns.map((turn) => (
               <TurnBlock key={turn.id} onRetry={session.retry} turn={turn} />
@@ -207,19 +276,39 @@ export function ConversationPage({
               <span>Context</span>
               <h2 id="intersections-title">{copy.conversation.contextTitle}</h2>
             </header>
-            {intersections.map((item) => (
-              <article key={item.domain}>
-                <h3>{item.domain}</h3>
-                <p>{item.concepts.join('、')}</p>
-                <blockquote>{item.reflection}</blockquote>
+            {isRealMode ? (
+              <article>
+                <h3>真实回答暂不生成认知交汇</h3>
+                <blockquote>
+                  本轮不会从 Provider 回答中提取、保存或伪造跨领域认知。JAR-006C
+                  之前，这里只保留能力边界说明。
+                </blockquote>
               </article>
-            ))}
-            <small>这些联系来自当前 Mock 回合，尚未保存为个人认知。</small>
+            ) : (
+              <>
+                {intersections.map((item) => (
+                  <article key={item.domain}>
+                    <h3>{item.domain}</h3>
+                    <p>{item.concepts.join('、')}</p>
+                    <blockquote>{item.reflection}</blockquote>
+                  </article>
+                ))}
+                <small>这些联系来自当前 Mock 回合，尚未保存为个人认知。</small>
+              </>
+            )}
           </aside>
         </div>
 
-        <section aria-labelledby="conversation-composer-title" className="conversation-composer">
-          <header>
+        <section
+          aria-labelledby="conversation-composer-title"
+          className="conversation-composer"
+          data-testid="conversation-composer"
+        >
+          <header
+            className="conversation-composer__identity"
+            data-layout-area="identity"
+            data-testid="conversation-composer-identity"
+          >
             <div>
               <p>继续探索</p>
               <h2 id="conversation-composer-title">{copy.conversation.composerLabel}</h2>
@@ -227,7 +316,11 @@ export function ConversationPage({
             <PresenceOrb motion={reducedMotion ? 'static' : 'ambient'} state={voiceState} />
           </header>
 
-          <div className="conversation-composer__text">
+          <div
+            className="conversation-composer__text"
+            data-layout-area="text"
+            data-testid="conversation-composer-text"
+          >
             <textarea
               id="conversation-input"
               onChange={(event) => setDraft(event.target.value)}
@@ -253,29 +346,41 @@ export function ConversationPage({
               rows={2}
               value={draft}
             />
-            <div>
-              <small>{copy.conversation.composerHint}</small>
-              <Button disabled={!draft.trim()} onClick={submitDraft} variant="secondary">
-                {copy.conversation.send}
+            <div
+              className="conversation-composer__generation-controls"
+              data-testid="conversation-generation-controls"
+            >
+              <small aria-live="polite">
+                {isGenerating
+                  ? copy.conversation.composerStreamingHint
+                  : copy.conversation.composerHint}
+              </small>
+              <Button
+                data-generating={isGenerating || undefined}
+                disabled={!isGenerating && !draft.trim()}
+                onClick={isGenerating ? session.cancel : submitDraft}
+                variant="secondary"
+              >
+                {isGenerating ? copy.conversation.stopGenerating : copy.conversation.send}
               </Button>
             </div>
           </div>
 
-          {session.state.activeResponseId ? (
-            <Button onClick={session.cancel} size="small" variant="quiet">
-              {copy.voice.cancelAction}
-            </Button>
-          ) : null}
-
-          <VoiceInteraction
-            controller={voiceController}
-            isEvidence={options.voiceEvidence !== null}
-            mode={voiceMode}
-            onModeChange={setVoiceMode}
-            reducedMotion={reducedMotion}
-            state={voiceState}
-            voiceButtonRef={voiceButtonRef}
-          />
+          <div
+            className="conversation-composer__voice"
+            data-layout-area="voice"
+            data-testid="conversation-composer-voice"
+          >
+            <VoiceInteraction
+              controller={voiceController}
+              isEvidence={options.voiceEvidence !== null}
+              mode={voiceMode}
+              onModeChange={setVoiceMode}
+              reducedMotion={reducedMotion}
+              state={voiceState}
+              voiceButtonRef={voiceButtonRef}
+            />
+          </div>
         </section>
       </main>
     </AppShell>

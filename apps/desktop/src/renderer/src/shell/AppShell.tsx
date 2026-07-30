@@ -5,7 +5,7 @@ import { Tooltip } from '../design-system';
 import { AppIcon, type AppIconName } from './AppIcon';
 
 interface NavigationItem {
-  readonly route?: 'conversation' | 'presence';
+  readonly route?: 'conversation' | 'presence' | 'settings';
   readonly icon: AppIconName;
   readonly label: string;
 }
@@ -47,7 +47,7 @@ function AvailableNavigationItem({
   secondary,
 }: NavigationItem & {
   active: boolean;
-  route: 'conversation' | 'presence';
+  route: 'conversation' | 'presence' | 'settings';
   secondary: string;
 }): React.JSX.Element {
   return (
@@ -71,7 +71,7 @@ export function AppShell({
   activeRoute,
   children,
 }: {
-  activeRoute: 'conversation' | 'presence';
+  activeRoute: 'conversation' | 'presence' | 'settings';
   children: ReactNode;
 }): React.JSX.Element {
   return (
@@ -110,7 +110,13 @@ export function AppShell({
         </nav>
 
         <ul className="app-shell__settings">
-          <UnavailableNavigationItem icon="settings" label={copy.navigation.settings} />
+          <AvailableNavigationItem
+            active={activeRoute === 'settings'}
+            icon="settings"
+            label={copy.navigation.settings}
+            route="settings"
+            secondary="Provider"
+          />
         </ul>
       </aside>
       <div className="app-shell__content">{children}</div>
