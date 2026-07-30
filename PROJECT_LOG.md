@@ -317,3 +317,77 @@ JAR-005：实现正式 Conversation 空间。本轮到此停止，不创建 JAR-
 ### 下一步
 
 JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约与一条真实中文语音路径。未经授权的具体人物或演员声音不得作为内置资产。本轮不创建或实现 JAR-006。
+
+## 2026-07-30 — JAR-006A Provider 基础与真实文字对话路径
+
+### 本次目标
+
+在不改变 Conversation 编辑性体验的前提下，建立 vendor-neutral Provider 边界，并接通
+一条安全、可取消的 OpenAI-compatible 真实文字流。真实 STT、真实 TTS、持久化和认知
+提取均不在本轮范围。
+
+### 实现内容
+
+- 新增 Provider 公开配置、Conversation 请求/事件和 13 类统一错误契约。
+- 新增 OpenAI-compatible Chat Completions SSE 适配器，支持分片、`[DONE]`、usage、
+  timeout、取消、非 2xx、流中错误和累计响应上限。
+- 新增 Jarvis 中文 prompt assembly：当前探索、领域、有限最近回合、跨领域边界与不确定性。
+- 新增 main-process Provider service、运行时 payload 验证和按 WebContents / request ID
+  隔离的 typed streaming IPC。
+- 新增 Electron `safeStorage` 凭据加密、版本化 userData 配置、末四位脱敏与删除能力。
+- 启用中文“设置”入口，支持连接测试、保存、删除、Mock / real 模式和分类错误。
+- real 文字回答进入现有 Conversation 时间线；取消保留部分、失败保留用户输入、重试不
+  复制用户消息，且不静默回退 Mock。
+- Settings 使用 React lazy import；未增加 Provider SDK 或其他运行时依赖。
+- 新增 localhost 假 Provider、Electron 完整 IPC 验收脚本和 8 张视觉证据。
+
+### 用户现在可以做什么
+
+- 在设置页配置并测试 OpenAI-compatible Base URL、模型和 API Key。
+- 安全保存 Key，重启后只看到是否保存和末四位；也可以删除凭据并恢复 Mock。
+- 在 Mock 与真实文字回答之间明确切换。
+- 在 Conversation 中获得增量中文文字回答、取消、查看分类错误并从同一问题重试。
+- 使用本地假 Provider 在没有真实 Key 的情况下验证完整网络与 IPC 链路。
+
+### 用户目前还不能做什么
+
+- 不能进行真实 STT 或真实 TTS。
+- 不能安装、预览或绑定 Voice Profile。
+- 不能持久化 Conversation、保存认知、使用 SQLite 或导出 Obsidian。
+- 项目所有者尚未用自己的真实第三方 Provider 完成最终手工验收。
+
+### 验证结果
+
+- format：通过。
+- lint：通过。
+- typecheck：通过。
+- test：104 项通过，包含真实 localhost HTTP 假 Provider。
+- build：通过。
+- smoke：通过；实际 Electron 返回 `JARVIS_IPC_SMOKE_OK`。
+- Electron Provider acceptance：通过；加密保存、脱敏、完整 SSE 和取消均返回
+  `JARVIS_PROVIDER_ACCEPTANCE_OK`，测试后删除虚构凭据。
+- GitHub CI：等待 Draft PR。
+
+### 视觉证据
+
+- `artifacts/jar-006a/settings-provider-empty-1440x900.png`
+- `artifacts/jar-006a/settings-provider-configured-masked-1440x900.png`
+- `artifacts/jar-006a/settings-provider-success-1440x900.png`
+- `artifacts/jar-006a/settings-provider-error-1440x900.png`
+- `artifacts/jar-006a/conversation-real-streaming-1440x900.png`
+- `artifacts/jar-006a/conversation-real-complete-1440x900.png`
+- `artifacts/jar-006a/conversation-real-cancelled-1440x900.png`
+- `artifacts/jar-006a/conversation-provider-offline-1024x900.png`
+
+### 已知问题
+
+- OpenAI-compatible Provider 的 usage 和流中错误细节并不完全一致，后续需要按真实服务
+  验收结果补充兼容性。
+- Renderer entry 为约 700.70 kB；Settings 已拆分为 15.58 kB JS / 5.99 kB CSS，Conversation
+  因共享语音控制器暂未拆分。
+- JAR-006A 在项目所有者完成真实 Provider 验收前不得宣称完全完成或自动合并。
+
+### 下一步
+
+先由项目所有者在应用设置页完成真实 Provider 测试并确认。通过、CI 和合并完成后才建议
+进入 JAR-006B；本轮不创建 JAR-006B 分支。

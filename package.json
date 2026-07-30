@@ -16,7 +16,8 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "pnpm --filter @jarvis/desktop typecheck",
     "test": "pnpm --filter @jarvis/desktop test",
-    "smoke": "pnpm --filter @jarvis/desktop smoke"
+    "smoke": "pnpm --filter @jarvis/desktop smoke",
+    "provider:fake": "pnpm --filter @jarvis/desktop provider:fake"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

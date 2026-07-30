@@ -1,4 +1,5 @@
 import type { VoicePhase } from '../voice/voice-state';
+import type { ProviderError } from '../../../shared/provider';
 
 export type ConversationSource = 'text' | 'voice';
 export type ConversationTurnStatus = 'cancelled' | 'complete' | 'failed' | 'streaming';
@@ -14,6 +15,7 @@ export interface ConversationTurn {
   readonly createdAt: string;
   readonly id: string;
   readonly isMock: boolean;
+  readonly providerError?: ProviderError;
   readonly relatedDomains?: readonly DomainReference[];
   readonly role: 'jarvis' | 'user';
   readonly source: ConversationSource;

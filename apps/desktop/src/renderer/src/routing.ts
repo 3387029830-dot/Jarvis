@@ -1,8 +1,11 @@
-export type AppRoute = 'conversation' | 'design-system' | 'presence';
+export type AppRoute = 'conversation' | 'design-system' | 'presence' | 'settings';
 
 export function resolveAppRoute(hash: string): AppRoute {
   if (hash.startsWith('#/design-system')) {
     return 'design-system';
+  }
+  if (hash.startsWith('#/settings')) {
+    return 'settings';
   }
   return hash.startsWith('#/conversation') ? 'conversation' : 'presence';
 }

@@ -50,6 +50,15 @@ Do not add unless a task explicitly requires it:
 - Disable renderer `nodeIntegration`.
 - Expose a minimal typed preload API.
 - API keys must never be stored or used in the renderer process.
+- Provider URLs, credentials, request headers, redirects, timeouts, cancellation, response limits,
+  and networking are owned by main-process services.
+- Provider credentials must use Electron `safeStorage` or an explicitly approved OS-backed
+  alternative. If encryption is unavailable, stop; never fall back to plaintext.
+- The renderer may receive only public Provider configuration and a masked suffix. Never expose a
+  credential getter, generic IPC, arbitrary fetch bridge, or raw Provider headers.
+- Real Provider failure must remain explicit and must never silently substitute Mock content.
+- Provider logs, errors, tests, screenshots, and fixtures must not contain full API keys or complete
+  private conversations.
 - All model, STT, TTS, filesystem, SQLite, and Obsidian operations run through main-process services.
 - Persist cognition changes as append-only events; do not silently overwrite belief history.
 - Every durable cognition item must retain source message IDs and timestamps.

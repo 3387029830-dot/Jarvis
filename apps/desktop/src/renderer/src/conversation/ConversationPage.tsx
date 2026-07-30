@@ -41,6 +41,9 @@ function TurnBlock({
         <span>{source}</span>
         <time dateTime={turn.createdAt}>{formatTurnTime(turn.createdAt)}</time>
         {turn.isMock ? <Badge tone="warning">Mock</Badge> : null}
+        {turn.role === 'jarvis' && !turn.isMock ? (
+          <Badge tone="success">真实 Provider</Badge>
+        ) : null}
       </header>
       <div className="conversation-turn__content">
         {paragraphs.length > 0 ? (
@@ -61,8 +64,10 @@ function TurnBlock({
       {turn.status === 'failed' ? (
         <div className="conversation-turn__failure">
           <p>
-            <strong>{copy.conversation.failed}</strong>
-            {copy.conversation.errorBody}
+            <strong>{turn.providerError?.message ?? copy.conversation.failed}</strong>
+            {turn.providerError
+              ? `错误代码：${turn.providerError.code}。你的表达仍然保留，未自动切换到 Mock。`
+              : copy.conversation.errorBody}
           </p>
           <Button onClick={onRetry} size="small" variant="secondary">
             {copy.conversation.retry}
@@ -102,6 +107,7 @@ export function ConversationPage({
   const activeScenario = scenario ?? defaultConversationScenario;
   const [options] = useState(() => parseConversationOptions(window.location.hash));
   const session = useConversationSession(activeScenario, options.evidence);
+  const isRealMode = session.providerConfig?.mode === 'real';
   const syncVoice = session.syncVoice;
   const voiceController = useVoiceController();
   const [voiceMode, setVoiceMode] = useVoiceInteractionMode();
@@ -175,7 +181,9 @@ export function ConversationPage({
             <h1>{activeScenario.title}</h1>
             <div>
               <span>{activeScenario.domains.join(' · ')}</span>
-              <Badge tone="warning">本地 Mock</Badge>
+              <Badge tone={isRealMode ? 'success' : 'warning'}>
+                {isRealMode ? '真实文字 Provider' : '本地 Mock'}
+              </Badge>
             </div>
           </div>
           <div className="conversation-context__voice">
@@ -195,7 +203,11 @@ export function ConversationPage({
           <section aria-label="对话时间线" className="conversation-timeline">
             <div className="conversation-timeline__intro">
               <span>讨论手稿</span>
-              <p>{copy.conversation.mockDisclosure}</p>
+              <p>
+                {isRealMode
+                  ? '新提交的文字会发送给已配置的 Provider；页面中标有 Mock 的既有内容仍是演示数据。'
+                  : copy.conversation.mockDisclosure}
+              </p>
             </div>
             {session.state.turns.map((turn) => (
               <TurnBlock key={turn.id} onRetry={session.retry} turn={turn} />
@@ -207,14 +219,26 @@ export function ConversationPage({
               <span>Context</span>
               <h2 id="intersections-title">{copy.conversation.contextTitle}</h2>
             </header>
-            {intersections.map((item) => (
-              <article key={item.domain}>
-                <h3>{item.domain}</h3>
-                <p>{item.concepts.join('、')}</p>
-                <blockquote>{item.reflection}</blockquote>
+            {isRealMode ? (
+              <article>
+                <h3>真实回答暂不生成认知交汇</h3>
+                <blockquote>
+                  本轮不会从 Provider 回答中提取、保存或伪造跨领域认知。JAR-006C
+                  之前，这里只保留能力边界说明。
+                </blockquote>
               </article>
-            ))}
-            <small>这些联系来自当前 Mock 回合，尚未保存为个人认知。</small>
+            ) : (
+              <>
+                {intersections.map((item) => (
+                  <article key={item.domain}>
+                    <h3>{item.domain}</h3>
+                    <p>{item.concepts.join('、')}</p>
+                    <blockquote>{item.reflection}</blockquote>
+                  </article>
+                ))}
+                <small>这些联系来自当前 Mock 回合，尚未保存为个人认知。</small>
+              </>
+            )}
           </aside>
         </div>
 

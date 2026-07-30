@@ -142,3 +142,13 @@ JAR-006 接入真实 STT、模型与 TTS 时，凭据和网络调用必须进入
 - provider 选择、凭据与自动删除设置。
 
 Voice Profile 的类别、授权来源和 Provider binding 见 `docs/VOICE_PROFILES.md`。
+
+## JAR-006A 边界
+
+JAR-006A 只替换文字 Conversation Provider，不改变语音状态机：
+
+- 麦克风采集仍是 Renderer 本地、短暂且不通过 Provider IPC；
+- STT、understanding、语音回答与播放仍是明确标注的确定性 Mock；
+- real 文字回答完成后不会进入真实或系统 TTS；
+- `VoiceProfile` 不安装、不预览、不选择，也不绑定 Provider voice ID；
+- JAR-006B 才能引入真实 STT，JAR-006C 才能引入真实 TTS 与授权声线 binding。

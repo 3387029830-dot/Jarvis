@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 
 import { ConversationPage } from './conversation/ConversationPage';
 import { PresencePage } from './presence/PresencePage';
 import { readExplorationId, resolveAppRoute } from './routing';
 import { Showcase } from './showcase/Showcase';
+
+const SettingsPage = lazy(() =>
+  import('./settings/SettingsPage').then((module) => ({ default: module.SettingsPage })),
+);
 
 export function App(): React.JSX.Element {
   const [hash, setHash] = useState(window.location.hash);
@@ -20,6 +24,13 @@ export function App(): React.JSX.Element {
   }
   if (route === 'conversation') {
     return <ConversationPage explorationId={readExplorationId(hash)} />;
+  }
+  if (route === 'settings') {
+    return (
+      <Suspense fallback={<div className="route-loading">正在打开设置…</div>}>
+        <SettingsPage />
+      </Suspense>
+    );
   }
   return <PresencePage />;
 }

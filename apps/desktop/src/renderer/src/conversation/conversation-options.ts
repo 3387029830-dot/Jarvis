@@ -1,4 +1,12 @@
-export type ConversationEvidenceState = 'error' | 'normal' | 'offline' | 'streaming';
+export type ConversationEvidenceState =
+  | 'error'
+  | 'normal'
+  | 'offline'
+  | 'provider-offline'
+  | 'real-cancelled'
+  | 'real-complete'
+  | 'real-streaming'
+  | 'streaming';
 
 export interface ConversationOptions {
   readonly evidence: ConversationEvidenceState;
@@ -12,7 +20,16 @@ export function parseConversationOptions(hash: string): ConversationOptions {
   const params = new URLSearchParams(queryIndex < 0 ? '' : hash.slice(queryIndex + 1));
   const state = params.get('state');
   return {
-    evidence: state === 'error' || state === 'offline' || state === 'streaming' ? state : 'normal',
+    evidence:
+      state === 'error' ||
+      state === 'offline' ||
+      state === 'provider-offline' ||
+      state === 'real-cancelled' ||
+      state === 'real-complete' ||
+      state === 'real-streaming' ||
+      state === 'streaming'
+        ? state
+        : 'normal',
     focusComposer: params.get('focus') === 'composer',
     reducedMotion: params.get('motion') === 'reduced',
     voiceEvidence: parseVoiceEvidenceState(params.get('voice')),

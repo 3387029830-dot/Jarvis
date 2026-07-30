@@ -113,3 +113,16 @@ Jarvis may say what it remembers and why a past item is relevant. It must not im
 - TTS can be disabled independently.
 - Minimum text contrast should meet WCAG AA.
 - Voice must never be the only way to complete an action.
+
+## JAR-006A：真实文字 Provider 体验
+
+- “设置”是正式产品入口，但保持私人认知空间的安静层级，不呈现为企业集成控制台。
+- 页面始终明确显示 Mock 或真实文字模式。未通过测试时不能保存并启用 real。
+- 连接失败必须说明 authentication、model、quota、network、timeout 等具体类别，并提供
+  修改配置、重新测试或回到 Mock 的路径。
+- 已保存 Key 只显示末四位，保存后输入框清空；删除凭据必须明确说明会恢复 Mock。
+- real 模式的新文字回答以增量内容进入现有讨论手稿。既有 Mock 历史继续显示 Mock
+  标记，固定“思维交汇”不冒充从真实回答提取的认知。
+- 取消保留已经显示的部分；失败保留用户表达；重试复用原用户消息。
+- 文字完成后不调用真实 TTS。语音入口继续明确标注真实录音 + Mock 转录/回答，直到
+  JAR-006B/C。

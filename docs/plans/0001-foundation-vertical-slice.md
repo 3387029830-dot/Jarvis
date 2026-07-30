@@ -313,6 +313,31 @@ For JAR-005 specifically:
   Provider bindings, real TTS, credentials, or authorization enforcement would expand into JAR-006
   and is explicitly deferred.
 
+## JAR-006A implementation details and deviations
+
+- JAR-006 is split into A (Conversation Provider), B (STT) and C (TTS / Voice Profile binding).
+  This plan executes only A; the parent issue remains incomplete.
+- The shared contract lives in `src/shared/provider.ts`; main contains validation, config store,
+  service, prompt builder and OpenAI-compatible adapter. Renderer never imports Provider code.
+- `provider-config.v1.json` is stored under userData. `safeStorage` is mandatory for Key writes;
+  there is no plaintext or repository fallback.
+- The real-mode gate is implemented at save time: saving real runs a connection test first and
+  persists/enables only on success. A standalone test does not persist a newly typed Key.
+- SSE uses native fetch instead of a vendor SDK. This avoids SDK code in Renderer and keeps custom
+  compatible endpoints possible. Redirects are manual, response size is capped, timeout and user
+  cancellation share an AbortController with distinct error codes.
+- Error payloads deliberately discard Provider error bodies. Stable code, status, request ID,
+  Provider ID and a safe summary give UI recovery without logging keys or complete private text.
+- Settings follows the user-approved Superdesign spatial direction, but generated claims about
+  localStorage, direct Renderer CORS, hard-coded models and automatic Mock fallback were rejected.
+- Settings is route-split. Conversation splitting was evaluated and deferred because the page
+  currently shares shell, evidence and voice-controller lifecycles; the 10.84 kB entry growth does
+  not justify destabilizing JAR-005 in this slice.
+- Visual real states are deterministic evidence and explicitly documented as such. Functional
+  acceptance separately used a real localhost HTTP server and actual production Electron IPC.
+- No real third-party credentials were available. The local server and all automated/manual local
+  gates passed, but project-owner real Provider verification remains a completion and merge gate.
+
 ## Progress log
 
 - 2026-07-29: Read `AGENTS.md`, `README.md`, `PLANS.md`, every product document listed by README, the three accepted ADRs, the GitHub workflow, JAR task list, and this ExecPlan before modifying repository files.
@@ -433,3 +458,29 @@ For JAR-005 specifically:
 - 2026-07-30: Published the identical implementation tree to Draft PR #3. GitHub Actions
   `Quality gates` run `30517812568` passed in 1 minute 15 seconds. The final documentation update,
   repeated CI, Ready transition, and squash merge remain.
+- 2026-07-30: Began JAR-006A on `feat/jar-006a-provider-foundation` after reading all required
+  product, architecture, voice, Provider/profile, status, task, plan and JAR-005 evidence documents.
+  Confirmed that STT, TTS, persistence, cognition extraction and JAR-006B/C remain excluded.
+- 2026-07-30: Generated a Superdesign Settings draft from the approved JAR-005 source. The user
+  approved its spatial direction; implementation corrected generated security and product errors
+  before any repository code was changed.
+- 2026-07-30: Added Provider contracts, 13 categorized errors, runtime validation, Jarvis prompt
+  assembly, OpenAI-compatible SSE, safeStorage config, Provider service and request-isolated
+  streaming IPC. Preload remains narrow and exposes unsubscribe rather than generic channels.
+- 2026-07-30: Added the lazy Chinese Settings route and connected real text responses to the
+  existing Conversation reducer. Mock is still default; real failure never silently substitutes
+  local content; real mode hides fixed Mock cognition intersections.
+- 2026-07-30: Added URL, prompt, SSE, status, timeout, cancellation, malformed data, size, usage,
+  credential, IPC isolation, preload subscription, Settings and local real HTTP tests. The suite
+  reached 104 passing tests across 34 files.
+- 2026-07-30: Ran production Electron against `fake-openai-provider.mjs`. The complete typed path
+  tested the connection, encrypted a virtual Key, verified suffix-only public config, streamed 58
+  Chinese characters, cancelled a second request without late chunks and deleted the credential.
+- 2026-07-30: Captured the eight required production-Electron screenshots under
+  `artifacts/jar-006a/` at exact 1440×900 and 1024×900 dimensions; no real credentials or private
+  Provider output appear in evidence.
+- 2026-07-30: Build comparison recorded 689.62 kB before and 700.70 kB after for the Renderer entry,
+  plus a lazy 15.58 kB Settings JS chunk and 5.99 kB CSS chunk. No dependency was added.
+- 2026-07-30: Real OpenAI-compatible third-party verification is waiting for the project owner to
+  enter credentials inside Settings. JAR-006A must remain Draft/not fully accepted and must not
+  auto-merge until that confirmation arrives.
