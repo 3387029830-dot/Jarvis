@@ -227,7 +227,7 @@ JAR-004：接通真实麦克风权限、按住说话与语音状态机，并用�
 - smoke：本地通过，生产 Electron 返回 `{"process":"main","status":"ok"}`。
 - 人工验收：真实权限 requesting、真实 listening 波形、松开后的 Mock 全链、speaking 打断、Escape 清理均通过。
 - 视觉：1440×900 七种状态与 1024×900 listening 均已检查；200% 缩放依赖纵向滚动但可操作。
-- GitHub CI：待 Draft PR 创建后执行，不以此状态标记任务完成。
+- GitHub CI：通过；Draft PR #2 的 `Quality gates` 首轮在 59 秒内完成（Actions run `30514214080`）。
 
 ### 视觉证据
 

@@ -350,5 +350,8 @@ For JAR-004 specifically:
   error and reduced-motion states. The production health-check continued to return
   `{"process":"main","status":"ok"}` for every capture.
 - 2026-07-30: Local format, lint, strict typecheck, 63 tests, build, and smoke passed before
-  publication. Draft PR creation and GitHub CI remain the final publication gate; JAR-004 must not
-  be considered complete until those checks and the requested squash merge succeed.
+  publication. Draft PR #2 was created from implementation commit `51478be`; GitHub Actions
+  `Quality gates` run `30514214080` completed successfully in 59 seconds.
+- 2026-07-30: The requested squash merge remains the final publication gate. JAR-004 must not be
+  considered complete until CI also passes for this final documentation commit and the merge
+  succeeds without bypassing repository protection.
