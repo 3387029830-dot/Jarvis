@@ -157,7 +157,7 @@ JAR-003：实现 App Shell 与 Presence「此刻」页面。
 - test：本地通过，14 个文件共 32 项。
 - build：本地通过。
 - smoke：本地通过，真实 Electron 返回 `{"process":"main","status":"ok"}`。
-- GitHub CI：待 PR 创建后确认。
+- GitHub CI：通过，`Quality gates` 成功完成（Actions run `30510759971`）。
 - 人工验收：1440×900、1024×900、empty、single、populated、键盘焦点、reduced-motion 和 200% 缩放均已检查。
 
 ### 视觉证据
