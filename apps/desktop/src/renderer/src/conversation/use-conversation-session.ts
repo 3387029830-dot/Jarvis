@@ -202,7 +202,12 @@ export function useConversationSession(
   const submitText = useCallback(
     (rawContent: string): void => {
       const content = rawContent.trim();
-      if (!content) {
+      if (
+        !content ||
+        state.activeResponseId !== null ||
+        abortRef.current !== null ||
+        activeRequestRef.current !== null
+      ) {
         return;
       }
       const sessionId = ++sessionRef.current;
@@ -223,7 +228,7 @@ export function useConversationSession(
         void stream(sessionId);
       }
     },
-    [providerConfig?.mode, startRealStream, state.turns, stream],
+    [providerConfig?.mode, startRealStream, state.activeResponseId, state.turns, stream],
   );
 
   const cancel = useCallback((): void => {

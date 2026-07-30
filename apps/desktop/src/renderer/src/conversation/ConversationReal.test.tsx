@@ -86,8 +86,34 @@ describe('Conversation real Provider path', () => {
     fireEvent.change(input, { target: { value: '需要取消的问题' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     await waitFor(() => expect(start).toHaveBeenCalledTimes(2));
-    fireEvent.click(screen.getByRole('button', { name: '取消本轮' }));
+    const nextDraft = '先保留这条下一步想法';
+    fireEvent.change(input, { target: { value: nextDraft } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(start).toHaveBeenCalledTimes(2);
+    expect((input as HTMLTextAreaElement).value).toBe(nextDraft);
+
+    const reading = screen.getByTestId('conversation-reading');
+    Object.defineProperties(reading, {
+      clientHeight: { configurable: true, value: 300 },
+      scrollHeight: { configurable: true, value: 1200 },
+    });
+    reading.scrollTop = 100;
+    fireEvent.scroll(reading);
+    const streamingRequestId = (start.mock.calls[1]?.[0] as { requestId?: string } | undefined)
+      ?.requestId;
+    act(() => {
+      streamListener?.({
+        content: '用户向上阅读后新增的流式片段。',
+        requestId: streamingRequestId ?? '',
+        type: 'delta',
+      });
+    });
+    expect(reading.scrollTop).toBe(100);
+
+    fireEvent.click(screen.getByRole('button', { name: '停止生成' }));
     await waitFor(() => expect(cancel).toHaveBeenCalledOnce());
+    expect((input as HTMLTextAreaElement).value).toBe(nextDraft);
+    expect(screen.getByRole('button', { name: '发送文字' })).toBeTruthy();
 
     const cancelledRequestId = (start.mock.calls[1]?.[0] as { requestId?: string } | undefined)
       ?.requestId;
@@ -129,5 +155,10 @@ describe('Conversation real Provider path', () => {
     fireEvent.click(screen.getByRole('button', { name: '重新尝试' }));
     await waitFor(() => expect(start).toHaveBeenCalledTimes(4));
     expect(screen.getAllByText('需要重试的问题')).toHaveLength(1);
+    expect(
+      Array.from(screen.getByTestId('conversation-composer').children).map(
+        (child) => (child as HTMLElement).dataset.layoutArea,
+      ),
+    ).toEqual(['identity', 'text', 'voice']);
   });
 });

@@ -28,6 +28,11 @@
 - API Key 使用 Electron `safeStorage` 加密写入 userData 下版本化配置；Renderer 只看到是否保存和末四位。
 - 中文“设置”页支持连接测试、保存、删除、Mock / real 切换与分类错误。
 - real 模式的文字回答通过 typed IPC 增量进入既有编辑性时间线；取消会中止 fetch，重试不复制用户消息。
+- Conversation 输入区使用 identity / text / voice 命名布局区域；发送与停止生成在同一
+  固定操作槽切换，生成、取消、失败和完成不会重新排列 Orb、文字输入或语音区域。
+- 生成期间可以预先编辑下一条草稿；Enter 不会发起第二个并发请求，取消后草稿仍保留。
+- 流式增长只滚动 Conversation 阅读区；接近底部时跟随，主动向上阅读后停止跟随并提供
+  “回到最新回答”，同时预留稳定滚动条空间。
 - 真实模式失败不会悄悄回退 Mock，固定 Mock“思维交汇”在 real 模式下被替换为能力边界说明。
 - 本地真实 HTTP 假 Provider 与 Electron 完整 IPC 链路已验证，包括加密保存、脱敏、SSE、取消和删除凭据。
 - 默认“点击说话”及可选“按住说话”；两种模式在 Presence 和 Conversation 间共享。
@@ -89,7 +94,7 @@
 ## 已知问题
 
 - Windows 是当前主要视觉验收环境；其他系统的中文字体渲染可能略有不同。
-- Renderer 入口 bundle 从 JAR-005 的 689.62 kB 增至约 700.70 kB；Settings 另有
+- Renderer 入口 bundle 从 JAR-005 的 689.62 kB 增至约 704.65 kB；Settings 另有
   15.58 kB JS / 5.99 kB CSS 懒加载分包。Conversation 拆分暂缓，避免在共享语音控制器上引入高风险切割。
 - 200% 缩放下布局会转为顶部精简导航并依赖纵向滚动，功能可用但信息密度明显降低。
 - speechSynthesis 的中文音色、语速和可用性受 Windows 已安装语音影响；不可用时只播放确定性短音，不会伪装成真实语音合成。
@@ -100,6 +105,8 @@
 - 真实 Provider 回答不会持久化，刷新后丢失；当前也不会生成认知候选。
 - 不同 OpenAI-compatible 服务对 `stream_options.include_usage` 和错误体的兼容程度可能不同。
 - 真实 Provider 手工验收仍等待项目所有者在应用设置页输入自己的凭据并确认；不得在聊天或终端提供 Key。
+- PR #4 合并前发现的流式 composer 布局跳动已修复并完成本地回归；仍需项目所有者在
+  自己的真实 Provider 上重新进行最终手工体验验收。
 - 浏览器 hash 路由足以覆盖当前两个产品页，但路由继续增加时应重新评估。
 - Voice Profile 当前只有文档契约；仓库不内置未经授权的具体人物或演员声音。
 

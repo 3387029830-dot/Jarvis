@@ -113,8 +113,12 @@ export function ConversationPage({
   const [voiceMode, setVoiceMode] = useVoiceInteractionMode();
   const voiceButtonRef = useRef<HTMLButtonElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const readingRef = useRef<HTMLDivElement>(null);
+  const isNearLatestRef = useRef(true);
   const composingRef = useRef(false);
   const [draft, setDraft] = useState('');
+  const [showLatestAction, setShowLatestAction] = useState(false);
+  const isGenerating = session.state.activeResponseId !== null;
   const voiceState = options.voiceEvidence
     ? createVoiceEvidenceState(options.voiceEvidence)
     : voiceController.state;
@@ -159,16 +163,53 @@ export function ConversationPage({
     return () => window.cancelAnimationFrame(frame);
   }, [options.focusComposer]);
 
+  useEffect(() => {
+    if (!isNearLatestRef.current) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const reading = readingRef.current;
+      if (reading) {
+        reading.scrollTop = reading.scrollHeight;
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [session.state.turns]);
+
   if (!scenario) {
     return <UnknownExploration />;
   }
 
   function submitDraft(): void {
-    if (!draft.trim()) {
+    if (!draft.trim() || isGenerating) {
       return;
     }
     session.submitText(draft);
     setDraft('');
+  }
+
+  function updateReadingPosition(): void {
+    const reading = readingRef.current;
+    if (!reading) {
+      return;
+    }
+    const distanceFromLatest = reading.scrollHeight - reading.scrollTop - reading.clientHeight;
+    const isNearLatest = distanceFromLatest <= 96;
+    isNearLatestRef.current = isNearLatest;
+    setShowLatestAction(!isNearLatest);
+  }
+
+  function returnToLatest(): void {
+    const reading = readingRef.current;
+    if (!reading) {
+      return;
+    }
+    isNearLatestRef.current = true;
+    setShowLatestAction(false);
+    reading.scrollTo({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      top: reading.scrollHeight,
+    });
   }
 
   return (
@@ -199,7 +240,23 @@ export function ConversationPage({
           </aside>
         ) : null}
 
-        <div className="conversation-reading">
+        <div
+          className="conversation-reading"
+          data-testid="conversation-reading"
+          onScroll={updateReadingPosition}
+          ref={readingRef}
+        >
+          <div className="conversation-reading__latest-slot">
+            <Button
+              className="conversation-reading__latest"
+              hidden={!showLatestAction}
+              onClick={returnToLatest}
+              size="small"
+              variant="quiet"
+            >
+              {copy.conversation.backToLatest}
+            </Button>
+          </div>
           <section aria-label="对话时间线" className="conversation-timeline">
             <div className="conversation-timeline__intro">
               <span>讨论手稿</span>
@@ -242,8 +299,16 @@ export function ConversationPage({
           </aside>
         </div>
 
-        <section aria-labelledby="conversation-composer-title" className="conversation-composer">
-          <header>
+        <section
+          aria-labelledby="conversation-composer-title"
+          className="conversation-composer"
+          data-testid="conversation-composer"
+        >
+          <header
+            className="conversation-composer__identity"
+            data-layout-area="identity"
+            data-testid="conversation-composer-identity"
+          >
             <div>
               <p>继续探索</p>
               <h2 id="conversation-composer-title">{copy.conversation.composerLabel}</h2>
@@ -251,7 +316,11 @@ export function ConversationPage({
             <PresenceOrb motion={reducedMotion ? 'static' : 'ambient'} state={voiceState} />
           </header>
 
-          <div className="conversation-composer__text">
+          <div
+            className="conversation-composer__text"
+            data-layout-area="text"
+            data-testid="conversation-composer-text"
+          >
             <textarea
               id="conversation-input"
               onChange={(event) => setDraft(event.target.value)}
@@ -277,29 +346,41 @@ export function ConversationPage({
               rows={2}
               value={draft}
             />
-            <div>
-              <small>{copy.conversation.composerHint}</small>
-              <Button disabled={!draft.trim()} onClick={submitDraft} variant="secondary">
-                {copy.conversation.send}
+            <div
+              className="conversation-composer__generation-controls"
+              data-testid="conversation-generation-controls"
+            >
+              <small aria-live="polite">
+                {isGenerating
+                  ? copy.conversation.composerStreamingHint
+                  : copy.conversation.composerHint}
+              </small>
+              <Button
+                data-generating={isGenerating || undefined}
+                disabled={!isGenerating && !draft.trim()}
+                onClick={isGenerating ? session.cancel : submitDraft}
+                variant="secondary"
+              >
+                {isGenerating ? copy.conversation.stopGenerating : copy.conversation.send}
               </Button>
             </div>
           </div>
 
-          {session.state.activeResponseId ? (
-            <Button onClick={session.cancel} size="small" variant="quiet">
-              {copy.voice.cancelAction}
-            </Button>
-          ) : null}
-
-          <VoiceInteraction
-            controller={voiceController}
-            isEvidence={options.voiceEvidence !== null}
-            mode={voiceMode}
-            onModeChange={setVoiceMode}
-            reducedMotion={reducedMotion}
-            state={voiceState}
-            voiceButtonRef={voiceButtonRef}
-          />
+          <div
+            className="conversation-composer__voice"
+            data-layout-area="voice"
+            data-testid="conversation-composer-voice"
+          >
+            <VoiceInteraction
+              controller={voiceController}
+              isEvidence={options.voiceEvidence !== null}
+              mode={voiceMode}
+              onModeChange={setVoiceMode}
+              reducedMotion={reducedMotion}
+              state={voiceState}
+              voiceButtonRef={voiceButtonRef}
+            />
+          </div>
         </section>
       </main>
     </AppShell>

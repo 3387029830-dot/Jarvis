@@ -18,8 +18,10 @@ export const zhCN = {
   },
   conversation: {
     backToPresence: '返回此刻',
+    backToLatest: '回到最新回答',
     cancelled: '已停止',
     composerHint: 'Enter 发送，Shift+Enter 换行；中文输入法组合期间不会误发送。',
+    composerStreamingHint: 'Jarvis 正在回答，你可以先整理下一条想法。',
     composerLabel: '继续这段讨论',
     composerPlaceholder: '写下还没有整理完整的想法……',
     contextTitle: '当前思维交汇',
@@ -30,6 +32,7 @@ export const zhCN = {
     offlineTitle: '当前处于离线演示状态',
     retry: '重新尝试',
     send: '发送文字',
+    stopGenerating: '停止生成',
     sourceText: '文字输入',
     sourceVoice: '模拟转录 · 真实录音',
     stopped: '这段回答已停止，已显示部分仍保留。',

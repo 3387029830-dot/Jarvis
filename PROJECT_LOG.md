@@ -340,6 +340,14 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
   复制用户消息，且不静默回退 Mock。
 - Settings 使用 React lazy import；未增加 Provider SDK 或其他运行时依赖。
 - 新增 localhost 假 Provider、Electron 完整 IPC 验收脚本和 8 张视觉证据。
+- 在真实使用前复现并修复 composer layout shift：根因是生成期间条件插入第 4 个顶层
+  Grid child，三列 Grid 自动放置把 `VoiceInteraction` 挤入新行。
+- composer 改为 identity / text / voice 三个明确命名区域；生成控制固定在 text 区，
+  “发送文字”在原位置切换为“停止生成”，不再插入临时顶层布局项。
+- 生成期间允许整理下一条草稿，但 Enter 和底层 session 都拒绝第二个并发请求；取消后
+  草稿保留，失败与重试不改变 composer 结构。
+- 阅读区预留稳定滚动条宽度；接近底部时按 chunk 跟随，用户主动上滚后停止强制跟随，
+  并可通过“回到最新回答”恢复。reduced-motion 下该入口不使用平滑滚动。
 
 ### 用户现在可以做什么
 
@@ -361,7 +369,8 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
 - format：通过。
 - lint：通过。
 - typecheck：通过。
-- test：104 项通过，包含真实 localhost HTTP 假 Provider。
+- test：109 项通过，包含真实 localhost HTTP 假 Provider，以及 composer 命名区域、
+  固定操作槽、并发阻止、草稿保留、取消恢复、失败/重试、滚动和 reduced-motion 回归。
 - build：通过。
 - smoke：通过；实际 Electron 返回 `JARVIS_IPC_SMOKE_OK`。
 - Electron Provider acceptance：通过；加密保存、脱敏、完整 SSE 和取消均返回
@@ -378,14 +387,20 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
 - `artifacts/jar-006a/conversation-real-complete-1440x900.png`
 - `artifacts/jar-006a/conversation-real-cancelled-1440x900.png`
 - `artifacts/jar-006a/conversation-provider-offline-1024x900.png`
+- `artifacts/jar-006a/conversation-composer-idle-1440x900.png`
+- `artifacts/jar-006a/conversation-composer-streaming-1440x900.png`
+- `artifacts/jar-006a/conversation-composer-streaming-1024x900.png`
+- `artifacts/jar-006a/conversation-composer-cancelled-1440x900.png`
 
 ### 已知问题
 
 - OpenAI-compatible Provider 的 usage 和流中错误细节并不完全一致，后续需要按真实服务
   验收结果补充兼容性。
-- Renderer entry 为约 700.70 kB；Settings 已拆分为 15.58 kB JS / 5.99 kB CSS，Conversation
+- Renderer entry 为约 704.65 kB；Settings 已拆分为 15.58 kB JS / 5.99 kB CSS，Conversation
   因共享语音控制器暂未拆分。
 - JAR-006A 在项目所有者完成真实 Provider 验收前不得宣称完全完成或自动合并。
+- 流式输入区阻塞已在 Mock、localhost Provider、1440×900、1024×900、200% 缩放与
+  reduced-motion 下复查；第三方真实 Provider 的最终体验仍等待项目所有者复验。
 
 ### 下一步
 

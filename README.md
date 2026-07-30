@@ -38,7 +38,8 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 ## 正在开发
 
 当前正在验收 **JAR-006A：Provider 基础与真实文字对话路径**。代码、本地假
-Provider、Electron IPC 与视觉状态已经验证；使用项目所有者自己的真实
+Provider、Electron IPC 与视觉状态已经验证；流式生成曾导致输入区重新排列的阻塞问题
+已通过固定命名区域和同位置“发送 / 停止生成”切换修复。使用项目所有者自己的真实
 OpenAI-compatible Provider 完成连接测试前，不把 JAR-006A 标记为完全验收通过，也不自动合并。
 
 本轮只接通文字模型；真实 STT、真实 TTS、Voice Profile Provider binding、持久化和认知提取仍未实现。默认语音入口仍使用真实本地录音加明确标注的 Mock 转录与回答。请以 [docs/STATUS.md](docs/STATUS.md) 为当前真实功能清单。

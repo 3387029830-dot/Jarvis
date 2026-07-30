@@ -337,6 +337,17 @@ For JAR-005 specifically:
   acceptance separately used a real localhost HTTP server and actual production Electron IPC.
 - No real third-party credentials were available. The local server and all automated/manual local
   gates passed, but project-owner real Provider verification remains a completion and merge gate.
+- A pre-merge real-use review exposed a composer layout shift. The cause was a conditionally
+  inserted fourth direct grid child while the composer declared only three implicit columns.
+- The composer now has explicit `identity`, `text`, and `voice` grid areas at every breakpoint.
+  Generation controls are a persistent slot inside `text`; the same button changes from send to
+  stop without changing top-level layout.
+- Conversation generation and voice phase remain independent. Provider streaming does not change
+  the voice container or Orb geometry, while the session and UI both reject concurrent text
+  submission and preserve a next-message draft through cancellation.
+- Streaming follows only the internal reading scroller while the user remains near the bottom.
+  Manual upward scrolling disables token following until the fixed “back to latest” action is
+  used; reduced motion changes that explicit return to instant scrolling.
 
 ## Progress log
 
@@ -487,3 +498,18 @@ For JAR-005 specifically:
 - 2026-07-30: Published implementation commit `b0e9fbc` to Draft PR #4. GitHub Actions
   `Quality gates` run `30524913909` completed successfully in 1 minute 12 seconds. The PR remains
   Draft because project-owner real Provider verification is still pending.
+- 2026-07-30: Reproduced the PR #4 composer layout shift and confirmed the direct cause: the
+  conditional cancellation button changed a three-child/three-column grid into a four-child
+  auto-placement case during streaming.
+- 2026-07-30: Used the owner-selected fixed-action-slot direction to define explicit composer grid
+  areas. The send button now becomes stop in place, drafts survive cancellation, and both UI and
+  session guards prevent concurrent Enter submissions.
+- 2026-07-30: Added near-bottom-only internal scroll following, an explicit return-to-latest
+  control, stable scrollbar gutter, and reduced-motion behavior. User scroll-up is covered by a
+  real-stream regression test.
+- 2026-07-30: Added five regression tests, bringing the suite to 109 tests across 35 files. Captured
+  four production-Electron composer screenshots at 1440×900 and 1024×900 and inspected 200% zoom
+  and reduced-motion states outside the committed evidence set.
+- 2026-07-30: Re-ran production Electron against the localhost OpenAI-compatible fake Provider.
+  Health IPC, 58-character Chinese SSE, cancellation, encrypted virtual credential masking and
+  credential deletion passed. Third-party real Provider acceptance remains intentionally pending.

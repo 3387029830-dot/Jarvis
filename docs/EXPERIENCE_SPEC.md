@@ -76,6 +76,8 @@ Jarvis may say what it remembers and why a past item is relevant. It must not im
 ### D. Respond
 
 - Text streams in.
+- 流式回答不得改变输入区的空间结构；状态变化应通过固定位置内的内容替换表达，而不是
+  通过插入、删除顶层布局项表达。
 - TTS begins when enough content is available.
 - User may interrupt playback and speak again.
 - Related concepts emerge in the side context, not as intrusive popups.
