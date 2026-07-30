@@ -366,7 +366,7 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
 - smoke：通过；实际 Electron 返回 `JARVIS_IPC_SMOKE_OK`。
 - Electron Provider acceptance：通过；加密保存、脱敏、完整 SSE 和取消均返回
   `JARVIS_PROVIDER_ACCEPTANCE_OK`，测试后删除虚构凭据。
-- GitHub CI：等待 Draft PR。
+- GitHub CI：Draft PR #4 首次 run `30524913909` 全部通过；最终文档提交后重复确认。
 
 ### 视觉证据
 
