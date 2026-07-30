@@ -297,7 +297,8 @@ JAR-005：实现正式 Conversation 空间。本轮到此停止，不创建 JAR-
 - test：通过，25 个文件共 77 项。
 - build：通过。
 - smoke：通过，生产 Electron 返回 `{"process":"main","status":"ok"}`。
-- GitHub CI：待 PR 创建后确认。
+- GitHub CI：通过，Draft PR #3 的 `Quality gates` 成功完成（Actions run
+  `30517812568`，1 分 15 秒）。
 - 人工验收：通过 Presence / Conversation 导航、中文文字发送、真实麦克风 toggle
   listening 与第二次点击结束、hold 模式切换、键盘焦点、1024、200% 缩放、
   reduced-motion、streaming、offline 和 error 状态检查。
