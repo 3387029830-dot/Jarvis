@@ -65,6 +65,62 @@
   line-height: var(--line-height-cjk);
 }
 
+.voice-mode {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0;
+  margin: var(--space-4) 0 0;
+  border: 0;
+}
+
+.voice-mode legend {
+  float: left;
+  margin-right: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.voice-mode label {
+  position: relative;
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  cursor: pointer;
+}
+
+.voice-mode input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.voice-mode label span {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-hairline) solid transparent;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.voice-mode input:checked + span {
+  border-color: var(--color-border-interactive);
+  color: var(--color-text-primary);
+  background: var(--color-bg-soft);
+}
+
+.voice-mode input:focus-visible + span {
+  outline: var(--focus-ring-width) solid var(--color-border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.voice-mode input:disabled + span {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled);
+}
+
 .voice-round {
   grid-column: 2;
   grid-row: 1 / span 3;

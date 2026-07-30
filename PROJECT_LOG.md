@@ -250,3 +250,70 @@ JAR-004：接通真实麦克风权限、按住说话与语音状态机，并用�
 ### 下一步
 
 JAR-005：实现正式 Conversation 空间。本轮到此停止，不创建 JAR-005 分支。
+
+---
+
+## 2026-07-30 — JAR-005 沉浸式 Conversation 空间
+
+### 本次目标
+
+让用户从 Presence 延续一个探索，在不是聊天气泡、不是仪表盘的中文 Conversation 空间中，用文字或语音继续同一段思考。
+
+### 实现内容
+
+- 激活 App Shell 的“对话”入口，并支持 `#/conversation` 与 exploration 查询参数。
+- Presence 三个探索主题可以携带 id 进入对应 Conversation。
+- 新增不确定性与群体、货币与制度、知识与行动落差三套确定性中文 Mock 场景。
+- 新增编辑性对话时间线、讨论上下文和跨领域联系，不使用左右聊天气泡。
+- 文字输入支持中文输入法组合、Enter 发送与 Shift+Enter 换行。
+- 语音和文字共享同一 timeline，并显示来源、时间和 Mock 边界。
+- 新增流式、取消、相同回答重试、离线、错误和未知 exploration 恢复。
+- 默认语音手势改为点击开始 / 再次点击结束，同时保留按住模式。
+- Presence 与 Conversation 共享交互模式；手势层只发出四种 capture 命令，继续复用单一 `VoiceController`。
+- 建立 Voice Profile 文档契约，覆盖原创、正式授权角色和经同意克隆三类声线及授权元数据。
+- 新增 ADR-0007，固定语音手势与 Voice Profile / Provider / Conversation 的长期边界。
+
+### 用户现在可以做什么
+
+- 从 Presence 选择一个问题并进入对应 Conversation。
+- 在三个固定中文讨论中阅读连续历史和跨领域联系。
+- 用文字继续讨论，并取消或重试本地模拟回答。
+- 默认点击开始和结束真实麦克风录音，也可切换为按住说话。
+- 在 Presence 与 Conversation 间保留本次运行中的语音手势偏好。
+- 使用键盘浏览、聚焦输入、发送、换行、取消和切换语音模式。
+
+### 用户目前还不能做什么
+
+- 不能获得真实 STT、模型推理或云端 TTS。
+- 不能保存 Conversation、消息、探索或认知变化；刷新后恢复固定 Mock 场景。
+- 不能安装、预览或选择真实 Voice Profile。
+- 不能使用 SQLite、星图、演变、档案、设置或 Obsidian。
+
+### 验证结果
+
+- format：通过。
+- lint：通过。
+- typecheck：通过。
+- test：通过，25 个文件共 77 项。
+- build：通过。
+- smoke：通过，生产 Electron 返回 `{"process":"main","status":"ok"}`。
+- GitHub CI：通过，Draft PR #3 的 `Quality gates` 成功完成（Actions run
+  `30517812568`，1 分 15 秒）。
+- 人工验收：通过 Presence / Conversation 导航、中文文字发送、真实麦克风 toggle
+  listening 与第二次点击结束、hold 模式切换、键盘焦点、1024、200% 缩放、
+  reduced-motion、streaming、offline 和 error 状态检查。
+
+### 视觉证据
+
+- 9 张生产 Electron PNG 和复现说明保存于 `artifacts/jar-005/README.md`。
+
+### 已知问题
+
+- 全部 Conversation 内容、跨领域联系和回答仍为确定性 Mock。
+- Renderer 生产 bundle 约 689.62 kB，后续应评估按路由拆分。
+- Voice Profile 当前只有规范和 ADR，尚未实现安装或 Provider binding。
+- 当前 hash 路由适合小范围页面，路由继续增长时需要重新评估。
+
+### 下一步
+
+JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约与一条真实中文语音路径。未经授权的具体人物或演员声音不得作为内置资产。本轮不创建或实现 JAR-006。

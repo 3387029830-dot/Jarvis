@@ -9,6 +9,7 @@ import { parsePresenceOptions, resolveOrbMotion } from './presence-options';
 import { PresenceOrb } from './PresenceOrb';
 import type { ExplorationItem } from './types';
 import { VoiceInteraction } from '../voice/VoiceInteraction';
+import { useVoiceInteractionMode } from '../voice/interaction-mode';
 import { createVoiceEvidenceState } from '../voice/voice-evidence';
 import { useVoiceController } from '../voice/use-voice-controller';
 
@@ -51,6 +52,7 @@ export function PresencePage(): React.JSX.Element {
   const [question, setQuestion] = useState('');
   const voiceButtonRef = useRef<HTMLButtonElement>(null);
   const voiceController = useVoiceController();
+  const [voiceMode, setVoiceMode] = useVoiceInteractionMode();
   const voiceState = options.voiceEvidence
     ? createVoiceEvidenceState(options.voiceEvidence)
     : voiceController.state;
@@ -90,8 +92,7 @@ export function PresencePage(): React.JSX.Element {
   }, [options.focusTarget]);
 
   function handleContinue(item: ExplorationItem): void {
-    setSelectedTitle(item.title);
-    setLocalResponse(copy.presence.continueResponse);
+    window.location.hash = `/conversation?exploration=${encodeURIComponent(item.id)}`;
   }
 
   function handleQuestionSubmit(event: React.FormEvent<HTMLFormElement>): void {
@@ -109,7 +110,7 @@ export function PresencePage(): React.JSX.Element {
     model.cognitionCandidates.length > 0;
 
   return (
-    <AppShell>
+    <AppShell activeRoute="presence">
       <main className="presence-page">
         <header className="presence-hero">
           <div className="presence-hero__copy">
@@ -145,6 +146,8 @@ export function PresencePage(): React.JSX.Element {
         <VoiceInteraction
           controller={voiceController}
           isEvidence={options.voiceEvidence !== null}
+          mode={voiceMode}
+          onModeChange={setVoiceMode}
           reducedMotion={prefersReducedMotion || options.reducedMotion}
           state={voiceState}
           voiceButtonRef={voiceButtonRef}

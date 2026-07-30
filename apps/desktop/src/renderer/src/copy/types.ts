@@ -14,6 +14,29 @@ export interface ProductCopy {
     readonly unavailable: string;
     readonly unavailableDescription: string;
   };
+  readonly conversation: {
+    readonly backToPresence: string;
+    readonly cancelled: string;
+    readonly composerHint: string;
+    readonly composerLabel: string;
+    readonly composerPlaceholder: string;
+    readonly contextTitle: string;
+    readonly errorBody: string;
+    readonly failed: string;
+    readonly mockDisclosure: string;
+    readonly offlineBody: string;
+    readonly offlineTitle: string;
+    readonly retry: string;
+    readonly send: string;
+    readonly sourceText: string;
+    readonly sourceVoice: string;
+    readonly stopped: string;
+    readonly streaming: string;
+    readonly unknownBody: string;
+    readonly unknownTitle: string;
+    readonly voiceProfileSummary: string;
+    readonly voiceProfileFuture: string;
+  };
   readonly presence: {
     readonly eyebrow: string;
     readonly activeExplorations: string;
@@ -41,7 +64,10 @@ export interface ProductCopy {
     readonly cancelAction: string;
     readonly demoDisclosure: string;
     readonly durationLabel: string;
+    readonly holdMode: string;
+    readonly holdModeDescription: string;
     readonly mockBadge: string;
+    readonly modeLabel: string;
     readonly noRoundYet: string;
     readonly privacyDetails: readonly string[];
     readonly privacySummary: string;
@@ -100,6 +126,9 @@ export interface ProductCopy {
       };
     };
     readonly transcriptLabel: string;
+    readonly toggleMode: string;
+    readonly toggleModeDescription: string;
+    readonly toggleListeningAction: string;
     readonly useTextAction: string;
   };
 }

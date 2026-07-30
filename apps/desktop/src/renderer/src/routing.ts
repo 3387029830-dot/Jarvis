@@ -1,5 +1,16 @@
-export type AppRoute = 'design-system' | 'presence';
+export type AppRoute = 'conversation' | 'design-system' | 'presence';
 
 export function resolveAppRoute(hash: string): AppRoute {
-  return hash.startsWith('#/design-system') ? 'design-system' : 'presence';
+  if (hash.startsWith('#/design-system')) {
+    return 'design-system';
+  }
+  return hash.startsWith('#/conversation') ? 'conversation' : 'presence';
+}
+
+export function readExplorationId(hash: string): string | null {
+  const queryIndex = hash.indexOf('?');
+  if (queryIndex < 0) {
+    return null;
+  }
+  return new URLSearchParams(hash.slice(queryIndex + 1)).get('exploration');
 }

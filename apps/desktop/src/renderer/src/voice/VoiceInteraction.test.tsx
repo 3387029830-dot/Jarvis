@@ -9,6 +9,7 @@ import type { LocalPlayback } from './local-playback';
 import type { MockVoiceLoopOptions } from './mock-voice-loop';
 import type { VoiceCaptureSession } from './voice-capture';
 import { VoiceController, type VoiceControllerDependencies } from './voice-controller';
+import type { VoiceInteractionMode } from './interaction-mode';
 import { VoiceInteraction } from './VoiceInteraction';
 
 const controllers: VoiceController[] = [];
@@ -62,9 +63,11 @@ function createController(options?: {
 
 function Harness({
   controller,
+  mode = 'hold',
   reducedMotion = false,
 }: {
   readonly controller: VoiceController;
+  readonly mode?: VoiceInteractionMode;
   readonly reducedMotion?: boolean;
 }): React.JSX.Element {
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
@@ -82,6 +85,8 @@ function Harness({
       <VoiceInteraction
         controller={binding}
         isEvidence={false}
+        mode={mode}
+        onModeChange={vi.fn()}
         reducedMotion={reducedMotion}
         state={state}
         voiceButtonRef={buttonRef}
@@ -91,6 +96,21 @@ function Harness({
 }
 
 describe('VoiceInteraction', () => {
+  it('uses click and keyboard activation as start/finish in toggle mode', async () => {
+    const { controller, requestMicrophone } = createController();
+    render(<Harness controller={controller} mode="toggle" />);
+    const button = screen.getByRole('button', { name: /点击说话/ });
+    fireEvent.click(button);
+    await vi.waitFor(() => expect(screen.getByRole('button', { name: /点击发送/ })).toBeTruthy());
+    expect(requestMicrophone).toHaveBeenCalledOnce();
+    expect(screen.getByText('再次点击发送')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /点击发送/ }));
+    await vi.waitFor(() =>
+      expect(document.querySelector('.voice-round__response p')?.textContent).toBe('模拟回答'),
+    );
+  });
+
   it('requests permission only after pointer press and releases into the Mock loop', async () => {
     const { controller, requestMicrophone } = createController();
     render(<Harness controller={controller} />);
@@ -167,9 +187,9 @@ describe('VoiceInteraction', () => {
     await vi.waitFor(() => expect(screen.getByRole('button', { name: /松开发送/ })).toBeTruthy());
     fireEvent.keyUp(screen.getByRole('button', { name: /松开发送/ }), { key: ' ' });
     await vi.waitFor(() =>
-      expect(screen.getByRole('button', { name: /Jarvis 正在回应/ })).toBeTruthy(),
+      expect(screen.getByRole('img', { name: /正在本地播放演示回应/ })).toBeTruthy(),
     );
-    const speakingButton = screen.getByRole('button', { name: /Jarvis 正在回应/ });
+    const speakingButton = screen.getByRole('button', { name: /按住说话/ });
     expect(document.activeElement).toBe(speakingButton);
 
     fireEvent.keyDown(speakingButton, { key: ' ', repeat: false });
