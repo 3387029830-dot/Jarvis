@@ -406,3 +406,61 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
 
 先由项目所有者在应用设置页完成真实 Provider 测试并确认。通过、CI 和合并完成后才建议
 进入 JAR-006B；本轮不创建 JAR-006B 分支。
+
+## 2026-07-31 — JAR-006A 最终真实 Provider 验收
+
+### 本次目标
+
+记录项目所有者使用真实 OpenAI-compatible Provider 的最终验收结论，并完成 PR #4
+合并前的文档、质量门禁与发布收尾。
+
+### 实现内容
+
+- 项目所有者确认连接测试与真实中文 SSE 流式回答正常。
+- 确认生成开始、持续、取消和结束时，输入框、Orb 与语音区保持稳定。
+- 确认主动上滚不会被增量片段拉回，“回到最新回答”正常。
+- 确认停止后无迟到文本，生成期间草稿保留，中文输入法与 Enter 行为正常。
+- 确认没有并发请求或重复用户消息。
+- 确认重启后 Provider 配置仍存在，完整 Key 不回显且只显示末四位。
+- 确认 Mock / real 边界清楚，STT 和 TTS 仍为 Mock。
+
+### 用户现在可以做什么
+
+- 在应用内安全配置自己的 OpenAI-compatible Provider。
+- 获得真实中文流式文字回答，并稳定地取消、继续编辑和浏览历史。
+- 重启后继续使用已保存配置，同时只查看脱敏后的 Key 状态。
+
+### 用户目前还不能做什么
+
+- 不能进行真实 STT 或真实 TTS。
+- 不能持久化 Conversation、保存认知、使用 SQLite 或导出 Obsidian。
+- 不能安装或绑定 Voice Profile。
+
+### 验证结果
+
+- 项目所有者真实 Provider 手工验收：通过。
+- format：通过。
+- lint：通过。
+- typecheck：通过。
+- test：35 个测试文件、109 项测试全部通过。
+- build：通过；Renderer entry 704.65 kB，Settings 保持懒加载分包。
+- smoke：通过；production Electron 返回 `JARVIS_IPC_SMOKE_OK`。
+
+### 视觉证据
+
+- `artifacts/jar-006a/conversation-composer-idle-1440x900.png`
+- `artifacts/jar-006a/conversation-composer-streaming-1440x900.png`
+- `artifacts/jar-006a/conversation-composer-streaming-1024x900.png`
+- `artifacts/jar-006a/conversation-composer-cancelled-1440x900.png`
+
+真实 Provider 验收使用项目所有者私人配置，不保存截图、回答或凭据到仓库。
+
+### 已知问题
+
+- 真实 STT、真实 TTS、持久化与认知提取仍未实现。
+- 不同 OpenAI-compatible Provider 的 usage 与流中错误格式仍可能有兼容差异。
+
+### 下一步
+
+完成 PR #4 的 Ready、CI 与 squash 合并。合并后停止；下一项建议为 JAR-006B，但本轮
+不创建其分支，也不实现真实 STT。

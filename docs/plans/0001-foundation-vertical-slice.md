@@ -335,8 +335,9 @@ For JAR-005 specifically:
   not justify destabilizing JAR-005 in this slice.
 - Visual real states are deterministic evidence and explicitly documented as such. Functional
   acceptance separately used a real localhost HTTP server and actual production Electron IPC.
-- No real third-party credentials were available. The local server and all automated/manual local
-  gates passed, but project-owner real Provider verification remains a completion and merge gate.
+- No real third-party credentials were stored in the repository. Local automated acceptance passed,
+  and the project owner satisfied the separate real Provider completion gate on 2026-07-31 without
+  sharing credentials or private responses.
 - A pre-merge real-use review exposed a composer layout shift. The cause was a conditionally
   inserted fourth direct grid child while the composer declared only three implicit columns.
 - The composer now has explicit `identity`, `text`, and `voice` grid areas at every breakpoint.
@@ -513,3 +514,10 @@ For JAR-005 specifically:
 - 2026-07-30: Re-ran production Electron against the localhost OpenAI-compatible fake Provider.
   Health IPC, 58-character Chinese SSE, cancellation, encrypted virtual credential masking and
   credential deletion passed. Third-party real Provider acceptance remains intentionally pending.
+- 2026-07-31: The project owner completed real OpenAI-compatible Provider acceptance in the app.
+  Connection testing, Chinese SSE, cancellation without late text, stable composer geometry,
+  scroll-up behavior, return-to-latest, draft preservation, IME/Enter handling, request isolation,
+  restart persistence, suffix-only Key display, and Mock/real boundaries all passed.
+- 2026-07-31: JAR-006A is accepted as complete. The final remaining steps are documentation,
+  repeated local/CI quality gates, Ready transition, squash merge, and branch cleanup. JAR-006B/C
+  remain explicitly out of scope.

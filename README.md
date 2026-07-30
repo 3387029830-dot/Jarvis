@@ -7,7 +7,7 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 ## 当前版本
 
 - 软件包版本：`0.1.0`
-- 当前里程碑：**JAR-006A — Provider 基础与真实文字对话路径（等待真实 Provider 验收）**
+- 当前里程碑：**JAR-006A — Provider 基础与真实文字对话路径（已完成）**
 - 产品默认语言：简体中文
 - 当前真实能力与 Mock 边界：[docs/STATUS.md](docs/STATUS.md)
 
@@ -37,10 +37,11 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 
 ## 正在开发
 
-当前正在验收 **JAR-006A：Provider 基础与真实文字对话路径**。代码、本地假
-Provider、Electron IPC 与视觉状态已经验证；流式生成曾导致输入区重新排列的阻塞问题
-已通过固定命名区域和同位置“发送 / 停止生成”切换修复。使用项目所有者自己的真实
-OpenAI-compatible Provider 完成连接测试前，不把 JAR-006A 标记为完全验收通过，也不自动合并。
+**JAR-006A：Provider 基础与真实文字对话路径** 已完成。项目所有者已在应用内使用自己的
+OpenAI-compatible Provider 验证连接、中文流式回答、取消、滚动稳定性、草稿保留、配置
+重启恢复与 Key 脱敏；流式生成不会重新排列输入框、Orb 或语音区。
+
+下一项计划是 JAR-006B，但尚未创建分支或开始实现。
 
 本轮只接通文字模型；真实 STT、真实 TTS、Voice Profile Provider binding、持久化和认知提取仍未实现。默认语音入口仍使用真实本地录音加明确标注的 Mock 转录与回答。请以 [docs/STATUS.md](docs/STATUS.md) 为当前真实功能清单。
 
@@ -115,7 +116,7 @@ corepack pnpm smoke
 4. JAR-004：语音状态机与 Mock 闭环 — 已完成
 5. JAR-005：Conversation 空间 — 已完成
 6. JAR-006：Provider contracts 与一条真实语音路径
-   - JAR-006A：Provider 基础与真实文字对话 — 等待项目所有者真实 Provider 验收
+   - JAR-006A：Provider 基础与真实文字对话 — 已完成
    - JAR-006B：真实 STT — 未开始
    - JAR-006C：真实 TTS 与 Voice Profile binding — 未开始
 7. JAR-007 及以后：本地持久化、认知事件、星图、演变与 Obsidian 导出

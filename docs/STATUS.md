@@ -1,10 +1,10 @@
 # Jarvis 当前状态
 
-最后更新：2026-07-30
+最后更新：2026-07-31
 
 当前版本：`0.1.0` / JAR-006A
 
-当前阶段：Provider 基础与真实文字路径已实现，等待项目所有者完成真实 Provider 手工验收
+当前阶段：JAR-006A 已完成；真实 Provider 与 composer 稳定性最终验收通过，JAR-006B 尚未开始
 
 ## 已真实实现
 
@@ -35,6 +35,9 @@
   “回到最新回答”，同时预留稳定滚动条空间。
 - 真实模式失败不会悄悄回退 Mock，固定 Mock“思维交汇”在 real 模式下被替换为能力边界说明。
 - 本地真实 HTTP 假 Provider 与 Electron 完整 IPC 链路已验证，包括加密保存、脱敏、SSE、取消和删除凭据。
+- 项目所有者已使用自己的真实 OpenAI-compatible Provider 完成最终手工验收：连接、
+  中文流式回答、开始/持续/取消/结束布局稳定、主动上滚、回到最新回答、无迟到文本、
+  草稿保留、中文输入法、无并发/重复消息、重启后配置恢复和 Key 末四位脱敏均通过。
 - 默认“点击说话”及可选“按住说话”；两种模式在 Presence 和 Conversation 间共享。
 - 手势适配层只发出 `startCapture`、`finishCapture`、`cancel`、`interruptAndCapture`，状态仍由单一 `VoiceController` 管理。
 - 用户直接按住后才请求麦克风权限；权限请求期间不会显示为正在录音。
@@ -73,7 +76,6 @@
 - 真实认知提取、用户确认与观点修订历史。
 - 星图、演变和档案页面。
 - Obsidian 同步或导出。
-- 项目所有者真实 OpenAI-compatible Provider 的手工验收；仓库中没有真实 API Key。
 - Voice Profile 安装、预览、授权校验或 Provider binding。
 
 ## 当前可访问和体验的页面
@@ -104,13 +106,12 @@
 - 所有 Conversation 历史和跨领域联系均为开发 Mock，刷新后恢复到固定场景。
 - 真实 Provider 回答不会持久化，刷新后丢失；当前也不会生成认知候选。
 - 不同 OpenAI-compatible 服务对 `stream_options.include_usage` 和错误体的兼容程度可能不同。
-- 真实 Provider 手工验收仍等待项目所有者在应用设置页输入自己的凭据并确认；不得在聊天或终端提供 Key。
-- PR #4 合并前发现的流式 composer 布局跳动已修复并完成本地回归；仍需项目所有者在
-  自己的真实 Provider 上重新进行最终手工体验验收。
+- 真实 Provider 最终验收已通过，但仓库、测试、截图和日志仍不得包含真实 API Key 或
+  私人 Provider 回答。
 - 浏览器 hash 路由足以覆盖当前两个产品页，但路由继续增加时应重新评估。
 - Voice Profile 当前只有文档契约；仓库不内置未经授权的具体人物或演员声音。
 
 ## 下一步
 
-项目所有者先完成 JAR-006A 真实 Provider 验收。确认通过并合并后，下一项才是
-JAR-006B：真实 STT；不得在此之前实现 JAR-006B 或 JAR-006C。
+JAR-006A 收尾合并后，下一项建议为 JAR-006B：真实 STT。当前尚未创建 JAR-006B 分支，
+也未开始实现真实 STT 或 JAR-006C。

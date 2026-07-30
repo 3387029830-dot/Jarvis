@@ -106,6 +106,8 @@ issue and does not authorize work on JAR-006B or JAR-006C.
   or cognition extraction.
 - Local fake Provider acceptance is automated; completion and merge additionally require the
   project owner to confirm a real Provider test.
+- Status: completed on 2026-07-31 after project-owner real Provider and composer-stability
+  acceptance. This does not authorize JAR-006B or JAR-006C work.
 
 ### JAR-006B — Real speech-to-text path
 

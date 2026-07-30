@@ -66,8 +66,21 @@ safeStorage、配置脱敏与 Settings 交互。自动测试还使用真实 loca
 不是产品设置。
 
 本地完整链路可以先运行 `corepack pnpm provider:fake`，再用设置页配置
-`http://localhost:4317/v1`、`jarvis-local-fake` 和任意虚构测试 Key。真实第三方
-Provider 验收仍等待项目所有者在本机设置页完成。
+`http://localhost:4317/v1`、`jarvis-local-fake` 和任意虚构测试 Key。
+
+## 真实 Provider 最终验收
+
+2026-07-31，项目所有者使用自己的真实 OpenAI-compatible Provider 完成最终验收：
+
+- 连接、真实中文流式回答、取消和完成通过；
+- composer 在开始、持续、取消与结束时没有重新排列；
+- 主动上滚、回到最新回答、无迟到文本、草稿保留通过；
+- 中文输入法、Enter、并发隔离与用户消息去重通过；
+- 重启后配置恢复，API Key 仅显示末四位；
+- Mock / real 区分清楚，STT 与 TTS 仍保持 Mock。
+
+该验收不向仓库保存真实 API Key、私人回答或额外截图。仓库中的图片仍只使用确定性
+evidence 数据。
 
 ## Composer 证据复现
 
@@ -96,5 +109,5 @@ Provider 验收仍等待项目所有者在本机设置页完成。
 - 不同兼容 Provider 对 usage 和流中错误格式可能存在差异。
 - Conversation 尚未路由拆分；当前共享语音控制器使本轮拆分风险高于收益。
 - 没有真实 STT、真实 TTS、SQLite、认知提取或 Voice Profile Provider binding。
-- 未使用项目所有者真实凭据前，JAR-006A 不宣称完全验收通过。
+- 项目所有者真实 Provider 验收已通过；仓库仍不保存真实凭据或私人回答。
 - 200% 缩放使用顶部精简导航和纵向回流，功能可操作但同屏可见内容明显减少。
