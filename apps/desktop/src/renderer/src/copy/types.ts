@@ -37,6 +37,71 @@ export interface ProductCopy {
     readonly localMockDisclosure: string;
     readonly reducedMotionActive: string;
   };
+  readonly voice: {
+    readonly cancelAction: string;
+    readonly demoDisclosure: string;
+    readonly durationLabel: string;
+    readonly mockBadge: string;
+    readonly noRoundYet: string;
+    readonly privacyDetails: readonly string[];
+    readonly privacySummary: string;
+    readonly responseLabel: string;
+    readonly retryAction: string;
+    readonly roundTitle: string;
+    readonly state: {
+      readonly cancelled: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly error: {
+        readonly action: string;
+        readonly label: string;
+      };
+      readonly idle: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly interrupted: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly listening: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly permissionRequest: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly respondingText: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly speaking: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly transcribing: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+      readonly understanding: {
+        readonly action: string;
+        readonly detail: string;
+        readonly label: string;
+      };
+    };
+    readonly transcriptLabel: string;
+    readonly useTextAction: string;
+  };
 }
 
 export type SupportedLocale = 'zh-CN';

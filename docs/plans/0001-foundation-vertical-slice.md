@@ -69,6 +69,17 @@ For the current JAR-003 milestone:
 - microphone capture, voice state transitions, providers, persistence, cognition extraction,
   Constellation, Evolution, Archive, and Settings implementations remain excluded.
 
+For the current JAR-004 milestone:
+
+- real microphone permission, in-memory MediaRecorder capture, analyser waveform, duration,
+  cancellation, interruption, local playback, and cleanup enter scope;
+- transcript, understanding, response content, streaming cadence, and playback content remain
+  deterministic Mock behavior and are labelled as such;
+- Presence displays only the current voice round; Conversation, history, persistence, cognition
+  extraction, SQLite, provider credentials, VAD, wake word, and global shortcuts remain excluded;
+- audio stays in renderer memory and never enters preload IPC, disk, console output, or a network
+  request.
+
 ## Architecture
 
 - Electron main/preload/renderer separation.
@@ -111,6 +122,25 @@ JAR-003 implementation details:
   controls. The preload bridge remains unchanged.
 - Treat the mock cognition-change text as a provisional view explicitly in copy and visuals; no
   cognition item is persisted or promoted to a user belief.
+
+JAR-004 implementation details:
+
+- Keep the implementation in `renderer/src/voice/` for this local-only slice. A pure reducer and
+  `VoiceController` own the canonical phase, permission state, session ID, transcript, response,
+  duration, level, notice, and error.
+- Use a monotonically increasing `sessionId`; the reducer ignores every stale asynchronous action.
+- Request `getUserMedia` only from pointer or keyboard hold. Build capture through MediaRecorder,
+  supported MIME selection, Web Audio analyser, a 300 ms minimum, and a 60 second maximum.
+- Stop tracks, analyser RAF, AudioContext, recorder, timers, AbortController, and playback on every
+  release, cancel, error, device-ended, interruption, and unmount path.
+- Hold the Blob only in a private controller field and clear it when the Mock transcript arrives.
+- Implement the Mock chain through injectable delays/callbacks. Prefer speechSynthesis for the
+  fixed Chinese response and fall back to a deterministic Web Audio tone without remote audio.
+- Keep the main hold button focusable with `aria-disabled` during non-interactive processing
+  phases. Native `disabled` was rejected after real testing showed it loses keyboard focus and
+  prevents the required speaking interruption.
+- Extend the existing production evidence hash only with read-only voice snapshots. This does not
+  change the preload surface or create product settings.
 
 ## Milestones
 
@@ -162,6 +192,19 @@ For JAR-003 specifically:
 - Capture the six required Presence/showcase PNGs and the evidence manifest in
   `artifacts/jar-003/`.
 
+For JAR-004 specifically:
+
+- Run format check, lint, strict typecheck, all unit/component tests, production build, and the
+  existing IPC smoke.
+- Test reducer happy/cancel/interrupt/error/stale/illegal paths; permissions, unavailable APIs,
+  duration limits, early release, cleanup, pointer/keyboard hold, Escape, key repeat, playback
+  fallback, focus retention, and playback failure text preservation.
+- Launch visible Windows Electron with the live controller, allow microphone access, observe real
+  analyser movement, release through the full Mock chain, interrupt speaking with a new hold, and
+  cancel the new listening session with Escape.
+- Inspect 1440×900, 1024×900, reduced-motion, error, and 200% zoom states.
+- Capture the eight required PNGs and evidence manifest in `artifacts/jar-004/`.
+
 ## Risks and decisions
 
 - WebGL Orb can delay the vertical slice. Implement a semantic 2D fallback first if WebGL blocks interaction work.
@@ -180,6 +223,14 @@ For JAR-003 specifically:
   voice animation architecture before JAR-004 provides the canonical state machine.
 - Hash-based development variants are intentionally small and deterministic; they are evidence
   controls, not product settings or a general routing abstraction.
+- JAR-004 keeps audio entirely renderer-local because no real provider exists. Moving provider
+  credentials or network calls into renderer remains prohibited; JAR-006 must introduce a
+  separately reviewed main-process boundary.
+- System speechSynthesis varies across Windows installations. The deterministic oscillator fallback
+  guarantees playback lifecycle testing but is intentionally not presented as real synthesized
+  speech.
+- The production Renderer bundle is approximately 657 kB. No dependency was added for JAR-004, but
+  route-level splitting should be reconsidered as JAR-005 adds UI.
 
 ## JAR-003 deviations and rationale
 
@@ -198,6 +249,25 @@ For JAR-003 specifically:
   only two renderer destinations, and the design-system route remains development-only.
 - No new runtime dependency was required. Existing React, browser APIs, CSS tokens, and primitives
   cover the complete slice.
+
+## JAR-004 deviations and rationale
+
+- The early architecture sketch placed voice and model code in workspace packages. JAR-004 has no
+  provider, cross-process consumer, or persistence boundary, so introducing packages would create
+  premature abstractions. The implementation remains a cohesive renderer vertical slice with
+  injectable adapters and can be extracted when JAR-006 creates a real second consumer.
+- `docs/VOICE_SPEC.md` previously said renderer audio should cross preload IPC. That would violate
+  this task's explicit no-audio-IPC boundary. The specification now separates the renderer-local
+  JAR-004 Mock loop from the future main-process provider boundary.
+- Superdesign listening and response drafts supplied the approved A+B composition, but implementation
+  retained the repository font tokens, removed the draft's external Inter import, and used the
+  actual editorial Presence shell.
+- Native button `disabled` was initially used during processing. Visible Electron testing showed
+  that focus was lost before speaking, making keyboard interruption fail. It was replaced with a
+  focusable `aria-disabled` state plus guarded handlers and a regression test.
+- Evidence phase screenshots use deterministic state snapshots so they remain repeatable. Real
+  microphone analyser, complete playback, interruption, and cancellation were separately exercised
+  in a visible live Electron run and are not inferred from those snapshots.
 
 ## Progress log
 
@@ -257,3 +327,31 @@ For JAR-003 specifically:
 - 2026-07-30: Local format, lint, strict typecheck, test, build, and Electron smoke gates passed.
   Draft PR #1 was created and GitHub Actions `Quality gates` run `30510759971` completed
   successfully for the implementation commit.
+- 2026-07-30: Began JAR-004 on `feat/jar-004-voice-mock-loop` after re-reading repository,
+  product, experience, voice, frontend, architecture, status, task, plan, copy, and JAR-003
+  evidence documents. Confirmed that Conversation, persistence, real providers, VAD, wake word,
+  global shortcuts, and JAR-005 remain excluded.
+- 2026-07-30: Generated two Superdesign branches from the approved Presence source for real
+  permission/listening and current-round response/playback states. The user approved the combined
+  A+B direction before implementation.
+- 2026-07-30: Added the pure typed reducer, `VoiceController`, browser capture adapter, deterministic
+  Mock loop, local playback adapter, evidence snapshots, Presence current-round UI, and semantic
+  Orb states without adding dependencies or expanding preload.
+- 2026-07-30: Added tests for nine canonical phases, stale sessions, invalid transitions,
+  permission errors, early release, minimum/maximum duration, track cleanup, pointer/keyboard
+  holds, key repeat, Escape, reduced motion, playback fallback/failure, speaking interruption, and
+  keyboard focus retention. The suite now contains 63 passing tests across 21 files.
+- 2026-07-30: Launched visible Electron with the live controller. Verified requesting before
+  permission, real microphone listening/analyser, full Mock processing to speaking, speaking
+  interruption into a new listening session, and Escape cleanup back to idle. The first live run
+  exposed native-disabled focus loss; the corrected `aria-disabled` implementation passed the
+  repeated live run.
+- 2026-07-30: Generated eight production Electron evidence PNGs at 1440×900 and 1024×900, including
+  error and reduced-motion states. The production health-check continued to return
+  `{"process":"main","status":"ok"}` for every capture.
+- 2026-07-30: Local format, lint, strict typecheck, 63 tests, build, and smoke passed before
+  publication. Draft PR #2 was created from implementation commit `51478be`; GitHub Actions
+  `Quality gates` run `30514214080` completed successfully in 59 seconds.
+- 2026-07-30: The requested squash merge remains the final publication gate. JAR-004 must not be
+  considered complete until CI also passes for this final documentation commit and the merge
+  succeeds without bypassing repository protection.

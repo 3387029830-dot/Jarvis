@@ -3,6 +3,7 @@
   min-height: 100%;
   padding: clamp(2.5rem, 5vw, 5rem) clamp(2rem, 5vw, 5.5rem) var(--space-16);
   margin-inline: auto;
+  transition: padding-top var(--motion-duration-standard) var(--motion-easing-standard);
 }
 
 .presence-hero {
@@ -13,6 +14,26 @@
   min-height: 24rem;
   padding-bottom: var(--space-12);
   border-bottom: var(--border-width-hairline) solid var(--color-border-subtle);
+  transition:
+    min-height var(--motion-duration-standard) var(--motion-easing-standard),
+    padding-bottom var(--motion-duration-standard) var(--motion-easing-standard);
+}
+
+.presence-page:has(.voice-round:not([data-voice-phase='idle'])) {
+  padding-top: var(--space-8);
+}
+
+.presence-page:has(.voice-round:not([data-voice-phase='idle'])) .presence-hero {
+  min-height: 18rem;
+  padding-bottom: var(--space-8);
+}
+
+.presence-page:has(.voice-round:not([data-voice-phase='idle'])) .presence-hero h1 {
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+}
+
+.presence-page:has(.voice-round:not([data-voice-phase='idle'])) .presence-orb {
+  width: min(100%, 14rem);
 }
 
 .presence-hero__copy {
@@ -125,6 +146,10 @@
   background: var(--color-bg-elevated);
   box-shadow: var(--glow-accent);
   place-items: center;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-instant) var(--motion-easing-standard);
 }
 
 .presence-orb__core i {
@@ -150,6 +175,44 @@
   animation: orb-core 4.5s var(--motion-easing-standard) infinite;
 }
 
+.presence-orb[data-voice-phase='listening'] .presence-orb__field {
+  opacity: calc(0.5 + var(--voice-level) * 0.5);
+}
+
+.presence-orb[data-voice-phase='listening'] .presence-orb__core {
+  border-color: color-mix(in srgb, var(--color-accent) 76%, transparent);
+  box-shadow: 0 0 32px rgb(143 183 255 / 18%);
+  transform: scale(var(--voice-scale));
+}
+
+.presence-orb[data-voice-phase='listening'] .presence-orb__orbit {
+  opacity: calc(0.45 + var(--voice-level) * 0.55);
+}
+
+.presence-orb[data-voice-phase='transcribing'] .presence-orb__orbit--inner {
+  animation: orb-gather 1.4s var(--motion-easing-emphasized) infinite alternate;
+}
+
+.presence-orb[data-voice-phase='understanding'] .presence-orb__orbit--outer {
+  border-style: dashed;
+  animation: orb-orient 7s linear infinite;
+}
+
+.presence-orb[data-voice-phase='responding_text'] .presence-orb__core i,
+.presence-orb[data-voice-phase='speaking'] .presence-orb__core {
+  animation: orb-response 1.8s var(--motion-easing-standard) infinite;
+}
+
+.presence-orb[data-voice-phase='error'] .presence-orb__core {
+  border-color: color-mix(in srgb, var(--color-danger) 54%, transparent);
+  box-shadow: 0 0 18px rgb(255 143 154 / 10%);
+}
+
+.presence-orb[data-voice-phase='error'] .presence-orb__core i {
+  background: var(--color-danger);
+  box-shadow: none;
+}
+
 @keyframes orb-breathe {
   50% {
     opacity: 0.55;
@@ -163,9 +226,27 @@
   }
 }
 
+@keyframes orb-gather {
+  to {
+    opacity: 0.48;
+    transform: scale(0.78);
+  }
+}
+
+@keyframes orb-orient {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orb-response {
+  50% {
+    opacity: 0.62;
+  }
+}
+
 .presence-entry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: block;
   align-items: end;
   gap: var(--space-8);
   padding-block: var(--space-8);
@@ -209,31 +290,6 @@
   outline: var(--focus-ring-width) solid var(--color-border-focus);
   outline-offset: var(--focus-ring-offset);
   box-shadow: 0 0 0 1px var(--color-bg-root);
-}
-
-.presence-voice {
-  display: grid;
-  gap: var(--space-2);
-  justify-items: center;
-}
-
-.presence-voice .ds-button {
-  min-width: 9.5rem;
-  border-radius: var(--radius-full);
-}
-
-.presence-voice__pulse {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: var(--radius-full);
-  background: currentColor;
-}
-
-.presence-voice p {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.625rem;
-  letter-spacing: 0.04em;
 }
 
 .presence-local-response {
@@ -469,9 +525,17 @@
   [data-orb-motion] .presence-orb__core i {
     animation: none;
   }
+
+  .presence-orb__core {
+    transition: none;
+  }
 }
 
 [data-motion='reduced'] [data-orb-motion] .presence-orb__orbit,
 [data-motion='reduced'] [data-orb-motion] .presence-orb__core i {
   animation: none;
+}
+
+[data-motion='reduced'] .presence-orb__core {
+  transition: none;
 }

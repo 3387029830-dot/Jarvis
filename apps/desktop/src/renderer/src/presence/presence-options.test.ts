@@ -4,10 +4,13 @@ import { parsePresenceOptions, resolveOrbMotion } from './presence-options';
 
 describe('Presence development options', () => {
   it('parses deterministic evidence states from the hash', () => {
-    expect(parsePresenceOptions('#/presence?variant=empty&focus=voice&motion=reduced')).toEqual({
+    expect(
+      parsePresenceOptions('#/presence?variant=empty&focus=voice&motion=reduced&voice=listening'),
+    ).toEqual({
       focusTarget: true,
       reducedMotion: true,
       variant: 'empty',
+      voiceEvidence: 'listening',
     });
   });
 

@@ -1,5 +1,7 @@
 export type EvidenceRoute = 'design-system' | 'presence';
 export type PresenceEvidenceVariant = 'empty' | 'single' | 'populated';
+export type VoiceEvidenceState =
+  'live' | 'idle' | 'listening' | 'transcribing' | 'responding' | 'speaking' | 'permission-denied';
 
 export interface ShowcaseEvidenceOptions {
   dialogOpen: boolean;
@@ -9,6 +11,7 @@ export interface ShowcaseEvidenceOptions {
   presenceVariant: PresenceEvidenceVariant;
   reducedMotion: boolean;
   route: EvidenceRoute;
+  voiceState: VoiceEvidenceState;
   width: number;
   zoomFactor: number;
 }
@@ -35,6 +38,17 @@ function parsePresenceVariant(value: string | undefined): PresenceEvidenceVarian
   return value === 'empty' || value === 'single' || value === 'populated' ? value : 'populated';
 }
 
+function parseVoiceState(value: string | undefined): VoiceEvidenceState {
+  return value === 'idle' ||
+    value === 'listening' ||
+    value === 'transcribing' ||
+    value === 'responding' ||
+    value === 'speaking' ||
+    value === 'permission-denied'
+    ? value
+    : 'live';
+}
+
 export function resolveShowcaseEvidenceOptions(
   environment: NodeJS.ProcessEnv,
 ): ShowcaseEvidenceOptions {
@@ -46,6 +60,7 @@ export function resolveShowcaseEvidenceOptions(
     presenceVariant: parsePresenceVariant(environment.JARVIS_PRESENCE_VARIANT),
     reducedMotion: environment.JARVIS_SHOWCASE_REDUCED_MOTION === '1',
     route: parseRoute(environment.JARVIS_EVIDENCE_ROUTE),
+    voiceState: parseVoiceState(environment.JARVIS_VOICE_STATE),
     width: parseDimension(environment.JARVIS_SMOKE_WIDTH, 1280, 1024),
     zoomFactor: parseZoomFactor(environment.JARVIS_EVIDENCE_ZOOM),
   };
@@ -56,6 +71,9 @@ export function createShowcaseHash(options: ShowcaseEvidenceOptions): string {
 
   if (options.route === 'presence') {
     parameters.set('variant', options.presenceVariant);
+    if (options.voiceState !== 'live') {
+      parameters.set('voice', options.voiceState);
+    }
   }
   if (options.dialogOpen && options.route === 'design-system') {
     parameters.set('dialog', 'open');

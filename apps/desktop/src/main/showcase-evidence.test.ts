@@ -12,6 +12,7 @@ describe('visual evidence options', () => {
       presenceVariant: 'populated',
       reducedMotion: false,
       route: 'design-system',
+      voiceState: 'live',
       width: 1280,
       zoomFactor: 1,
     });
@@ -47,9 +48,10 @@ describe('visual evidence options', () => {
       JARVIS_EVIDENCE_ZOOM: '2',
       JARVIS_PRESENCE_VARIANT: 'empty',
       JARVIS_SHOWCASE_FOCUS: '1',
+      JARVIS_VOICE_STATE: 'speaking',
     });
 
     expect(result.zoomFactor).toBe(2);
-    expect(createShowcaseHash(result)).toBe('/presence?variant=empty&focus=voice');
+    expect(createShowcaseHash(result)).toBe('/presence?variant=empty&voice=speaking&focus=voice');
   });
 });
