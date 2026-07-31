@@ -8,10 +8,17 @@ import { useVoiceInteractionMode } from '../voice/interaction-mode';
 import { useVoiceController } from '../voice/use-voice-controller';
 import { createVoiceEvidenceState } from '../voice/voice-evidence';
 import { VoiceInteraction } from '../voice/VoiceInteraction';
+import { takeVoiceTranscriptHandoff } from '../voice/voice-handoff';
 import { defaultConversationScenario, findConversationScenario } from './conversation-data';
 import { parseConversationOptions } from './conversation-options';
 import type { ConversationTurn } from './types';
 import { useConversationSession } from './use-conversation-session';
+import {
+  resolveVoiceTranscriptDraft,
+  stageVoiceTranscript as createVoiceTranscriptDraft,
+  wasTranscriptionEdited,
+  type PendingVoiceDraft,
+} from './voice-transcript-draft';
 
 function formatTurnTime(value: string): string {
   return new Intl.DateTimeFormat('zh-CN', {
@@ -28,7 +35,11 @@ function TurnBlock({
   turn: ConversationTurn;
 }): React.JSX.Element {
   const source =
-    turn.source === 'voice' ? copy.conversation.sourceVoice : copy.conversation.sourceText;
+    turn.source === 'voice'
+      ? turn.transcriptionEdited
+        ? '语音转录 · 已修正'
+        : '语音转录'
+      : copy.conversation.sourceText;
   const paragraphs = turn.content.split('\n\n').filter(Boolean);
   return (
     <article
@@ -117,6 +128,10 @@ export function ConversationPage({
   const isNearLatestRef = useRef(true);
   const composingRef = useRef(false);
   const [draft, setDraft] = useState('');
+  const [voiceHandoff] = useState(takeVoiceTranscriptHandoff);
+  const voiceHandoffSubmittedRef = useRef(false);
+  const [pendingVoiceDraft, setPendingVoiceDraft] = useState<PendingVoiceDraft | null>(null);
+  const activeVoiceResponseIdRef = useRef<string | null>(null);
   const [showLatestAction, setShowLatestAction] = useState(false);
   const isGenerating = session.state.activeResponseId !== null;
   const voiceState = options.voiceEvidence
@@ -129,20 +144,86 @@ export function ConversationPage({
 
   const intersections = useMemo(() => activeScenario.intersections, [activeScenario]);
 
+  const shouldStageVoiceTranscript =
+    voiceState.speechMode === 'real' &&
+    voiceState.transcriptReview === 'pending' &&
+    pendingVoiceDraft?.sessionId !== voiceState.sessionId;
+  const shouldClearVoiceTranscript =
+    pendingVoiceDraft !== null &&
+    (voiceState.sessionId !== pendingVoiceDraft.sessionId ||
+      voiceState.transcriptReview !== 'pending');
+
+  if (shouldStageVoiceTranscript) {
+    const staged = createVoiceTranscriptDraft(draft, voiceState.transcript, voiceState.sessionId);
+    setDraft(
+      options.voiceEvidence === 'real-edited'
+        ? `${staged.draft} 我也想保留自己的修正。`
+        : staged.draft,
+    );
+    setPendingVoiceDraft(staged.pending);
+  } else if (shouldClearVoiceTranscript) {
+    if (voiceState.transcriptReview !== 'confirmed' && pendingVoiceDraft) {
+      setDraft(pendingVoiceDraft.originalDraft);
+    }
+    setPendingVoiceDraft(null);
+  }
+
   useEffect(() => {
+    if (voiceState.speechMode === 'real') {
+      return;
+    }
     syncVoice({
       phase: voiceState.phase,
       response: voiceState.response,
       sessionId: voiceState.sessionId,
+      speechMode: voiceState.speechMode,
       transcript: voiceState.transcript,
+      transcriptReview: voiceState.transcriptReview,
     });
   }, [
     syncVoice,
     voiceState.phase,
     voiceState.response,
     voiceState.sessionId,
+    voiceState.speechMode,
     voiceState.transcript,
+    voiceState.transcriptReview,
   ]);
+
+  useEffect(() => {
+    if (!pendingVoiceDraft || pendingVoiceDraft.resolution === 'pending') {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => composerRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingVoiceDraft]);
+
+  useEffect(() => {
+    const activeVoiceResponseId = activeVoiceResponseIdRef.current;
+    if (!activeVoiceResponseId) {
+      return;
+    }
+    const response = session.state.turns.find((turn) => turn.id === activeVoiceResponseId);
+    if (!response) {
+      return;
+    }
+    if (response.status === 'streaming') {
+      voiceController.beginExternalResponse();
+      voiceController.replaceExternalResponse(response.content);
+      return;
+    }
+    activeVoiceResponseIdRef.current = null;
+    if (response.status === 'complete') {
+      voiceController.replaceExternalResponse(response.content);
+      voiceController.completeExternalResponse();
+    } else if (response.status === 'failed') {
+      voiceController.failExternalResponse(
+        response.providerError?.message ?? 'Conversation 回答没有完成，转录文字仍保留在时间线。',
+      );
+    } else {
+      voiceController.cancel();
+    }
+  }, [session.state.turns, voiceController]);
 
   useEffect(() => {
     if (options.reducedMotion) {
@@ -162,6 +243,14 @@ export function ConversationPage({
     const frame = window.requestAnimationFrame(() => composerRef.current?.focus());
     return () => window.cancelAnimationFrame(frame);
   }, [options.focusComposer]);
+
+  useEffect(() => {
+    if (!voiceHandoff || voiceHandoffSubmittedRef.current) {
+      return;
+    }
+    voiceHandoffSubmittedRef.current = true;
+    session.submitVoice(voiceHandoff.transcript, voiceHandoff.transcriptionEdited);
+  }, [session, voiceHandoff]);
 
   useEffect(() => {
     if (!isNearLatestRef.current) {
@@ -185,6 +274,46 @@ export function ConversationPage({
       return;
     }
     session.submitText(draft);
+    setDraft('');
+  }
+
+  function stageVoiceTranscript(resolution: 'append' | 'replace'): void {
+    if (!pendingVoiceDraft) {
+      return;
+    }
+    setDraft(resolveVoiceTranscriptDraft(pendingVoiceDraft, resolution));
+    setPendingVoiceDraft({ ...pendingVoiceDraft, resolution });
+    window.requestAnimationFrame(() => composerRef.current?.focus());
+  }
+
+  function keepOriginalDraft(): void {
+    if (!pendingVoiceDraft) {
+      return;
+    }
+    setDraft(pendingVoiceDraft.originalDraft);
+    setPendingVoiceDraft(null);
+    voiceController.cancel();
+  }
+
+  function confirmVoiceTranscript(): void {
+    if (
+      !pendingVoiceDraft ||
+      pendingVoiceDraft.resolution === 'pending' ||
+      !draft.trim() ||
+      isGenerating
+    ) {
+      return;
+    }
+    const transcriptionEdited = wasTranscriptionEdited(draft, pendingVoiceDraft.transcript);
+    if (!voiceController.confirmTranscript(draft)) {
+      return;
+    }
+    const responseId = session.submitVoice(draft, transcriptionEdited);
+    if (!responseId) {
+      return;
+    }
+    activeVoiceResponseIdRef.current = responseId;
+    setPendingVoiceDraft(null);
     setDraft('');
   }
 
@@ -318,12 +447,34 @@ export function ConversationPage({
 
           <div
             className="conversation-composer__text"
+            data-voice-transcript-review={
+              pendingVoiceDraft ? pendingVoiceDraft.resolution : undefined
+            }
             data-layout-area="text"
             data-testid="conversation-composer-text"
           >
+            {pendingVoiceDraft ? (
+              <div className="conversation-composer__transcript-status" role="status">
+                <div>
+                  <strong>{copy.voice.transcriptReviewLabel}</strong>
+                  <small>
+                    {pendingVoiceDraft.resolution === 'pending'
+                      ? '文字区已有未发送草稿。原内容保持不变，请先选择如何放入转录。'
+                      : copy.voice.transcriptReviewHint}
+                  </small>
+                </div>
+                <Badge tone="success">{copy.voice.realBadge}</Badge>
+              </div>
+            ) : null}
             <textarea
               id="conversation-input"
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setDraft(value);
+                if (pendingVoiceDraft?.resolution === 'pending') {
+                  setPendingVoiceDraft({ ...pendingVoiceDraft, originalDraft: value });
+                }
+              }}
               onCompositionEnd={() => {
                 composingRef.current = false;
               }}
@@ -346,23 +497,73 @@ export function ConversationPage({
               rows={2}
               value={draft}
             />
+            {pendingVoiceDraft?.resolution === 'pending' ? (
+              <div className="conversation-composer__draft-conflict">
+                <p>{pendingVoiceDraft.transcript}</p>
+                <div>
+                  <Button
+                    onClick={() => stageVoiceTranscript('replace')}
+                    size="small"
+                    variant="secondary"
+                  >
+                    替换草稿
+                  </Button>
+                  <Button
+                    onClick={() => stageVoiceTranscript('append')}
+                    size="small"
+                    variant="secondary"
+                  >
+                    追加转录
+                  </Button>
+                  <Button onClick={keepOriginalDraft} size="small" variant="quiet">
+                    保留原草稿
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <div
               className="conversation-composer__generation-controls"
               data-testid="conversation-generation-controls"
             >
               <small aria-live="polite">
-                {isGenerating
-                  ? copy.conversation.composerStreamingHint
-                  : copy.conversation.composerHint}
+                {pendingVoiceDraft
+                  ? copy.voice.transcriptReviewHint
+                  : isGenerating
+                    ? copy.conversation.composerStreamingHint
+                    : copy.conversation.composerHint}
               </small>
-              <Button
-                data-generating={isGenerating || undefined}
-                disabled={!isGenerating && !draft.trim()}
-                onClick={isGenerating ? session.cancel : submitDraft}
-                variant="secondary"
-              >
-                {isGenerating ? copy.conversation.stopGenerating : copy.conversation.send}
-              </Button>
+              <div>
+                {pendingVoiceDraft && pendingVoiceDraft.resolution !== 'pending' ? (
+                  <Button onClick={voiceController.restartCapture} size="small" variant="quiet">
+                    {copy.voice.rerecordAction}
+                  </Button>
+                ) : null}
+                <Button
+                  data-generating={isGenerating || undefined}
+                  disabled={
+                    !isGenerating && (!draft.trim() || pendingVoiceDraft?.resolution === 'pending')
+                  }
+                  onClick={
+                    isGenerating
+                      ? () => {
+                          session.cancel();
+                          if (activeVoiceResponseIdRef.current) {
+                            voiceController.cancel();
+                          }
+                        }
+                      : pendingVoiceDraft
+                        ? confirmVoiceTranscript
+                        : submitDraft
+                  }
+                  variant="secondary"
+                >
+                  {isGenerating
+                    ? copy.conversation.stopGenerating
+                    : pendingVoiceDraft
+                      ? '发送给 Jarvis'
+                      : copy.conversation.send}
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -378,6 +579,7 @@ export function ConversationPage({
               onModeChange={setVoiceMode}
               reducedMotion={reducedMotion}
               state={voiceState}
+              transcriptReviewMode="external"
               voiceButtonRef={voiceButtonRef}
             />
           </div>

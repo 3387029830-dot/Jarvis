@@ -131,7 +131,18 @@ JAR-006 接入真实 STT、模型与 TTS 时，凭据和网络调用必须进入
 - 文字输入始终是同等可用的回退路径；TTS 失败不得隐藏已经生成的文字。
 - 交互模式与 Voice Profile 相互独立：切换声线不会改变录音手势、Conversation 记忆或 Jarvis 人格。
 
-## 10. 后续能力
+## 10. JAR-006B 真实 STT
+
+- canonical phase 不新增第二套状态机；real STT 只替换 `transcribing` 的 Mock 实现。
+- 真实转录到达后保持 `phase=transcribing`，并进入 `transcriptReview=pending`。
+- 用户确认后才进入 `understanding`；未确认文字不进入 Conversation timeline。
+- 修改后的转录仍是 voice 来源，并记录 `transcriptionEdited`。
+- 如果 composer 已有草稿，转录先进入冲突缓冲区，必须明确替换或追加。
+- 失败可重试当前一份内存录音；重新录音、取消、成功或卸载释放它。
+- STT 配置读取或真实请求失败不得静默回退 Mock。
+- 音频以二进制 typed IPC 交给 main，Renderer 不持有凭据，也不直接请求 Provider。
+
+## 11. 后续能力
 
 以下不属于 JAR-004：
 
@@ -143,7 +154,7 @@ JAR-006 接入真实 STT、模型与 TTS 时，凭据和网络调用必须进入
 
 Voice Profile 的类别、授权来源和 Provider binding 见 `docs/VOICE_PROFILES.md`。
 
-## JAR-006A 边界
+## JAR-006A 边界（历史）
 
 JAR-006A 只替换文字 Conversation Provider，不改变语音状态机：
 
@@ -151,4 +162,4 @@ JAR-006A 只替换文字 Conversation Provider，不改变语音状态机：
 - STT、understanding、语音回答与播放仍是明确标注的确定性 Mock；
 - real 文字回答完成后不会进入真实或系统 TTS；
 - `VoiceProfile` 不安装、不预览、不选择，也不绑定 Provider voice ID；
-- JAR-006B 才能引入真实 STT，JAR-006C 才能引入真实 TTS 与授权声线 binding。
+- JAR-006B 已引入真实 STT；JAR-006C 才能引入真实 TTS 与授权声线 binding。

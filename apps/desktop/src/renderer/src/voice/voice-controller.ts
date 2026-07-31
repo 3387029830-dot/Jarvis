@@ -1,4 +1,10 @@
 import { createLocalPlayback, type LocalPlayback } from './local-playback';
+import type { ProviderError } from '../../../shared/provider';
+import type {
+  SpeechPublicConfig,
+  SpeechTranscriptionRequest,
+  SpeechTranscriptionResult,
+} from '../../../shared/speech';
 import { runMockVoiceLoop, type MockVoiceLoopOptions } from './mock-voice-loop';
 import {
   createVoiceCaptureSession,
@@ -21,6 +27,13 @@ export interface VoiceControllerDependencies {
   readonly playback: LocalPlayback;
   readonly requestMicrophone: () => Promise<MediaStream>;
   readonly runMockLoop: (options: MockVoiceLoopOptions) => Promise<void>;
+  readonly speech?: {
+    readonly cancel: (requestId: string) => Promise<void>;
+    readonly getConfig: () => Promise<SpeechPublicConfig>;
+    readonly transcribe: (
+      request: SpeechTranscriptionRequest,
+    ) => Promise<SpeechTranscriptionResult>;
+  };
   readonly setTimeout: (callback: () => void, delay: number) => number;
   readonly stopStream: (stream: MediaStream) => void;
 }
@@ -45,8 +58,22 @@ export function browserVoiceControllerDependencies(): VoiceControllerDependencie
       return navigator.mediaDevices.getUserMedia({ audio: true });
     },
     runMockLoop: runMockVoiceLoop,
+    speech: window.jarvis?.speech,
     setTimeout: window.setTimeout.bind(window),
     stopStream: stopMediaStream,
+  };
+}
+
+function mapSpeechError(error: ProviderError): VoiceError {
+  const codeByProviderCode: Partial<Record<ProviderError['code'], VoiceError['code']>> = {
+    audio_too_short: 'too-short',
+    audio_too_large: 'audio-too-large',
+    empty_transcript: 'empty-transcript',
+    unsupported_audio_format: 'unsupported-audio-format',
+  };
+  return {
+    code: codeByProviderCode[error.code] ?? 'transcription-failed',
+    message: error.message,
   };
 }
 
@@ -99,9 +126,12 @@ export class VoiceController {
   private abortController: AbortController | null = null;
   private attachmentCount = 0;
   private capture: VoiceCaptureSession | null = null;
+  private capturedAudio: CapturedAudio | null = null;
   private disposed = false;
   private ephemeralAudio: Blob | null = null;
   private holdActive = false;
+  private speechConfigPromise: Promise<SpeechPublicConfig | null> | null = null;
+  private speechRequestId: string | null = null;
   private readonly listeners = new Set<() => void>();
   private sessionCounter = 0;
   private state = initialVoiceState;
@@ -146,6 +176,17 @@ export class VoiceController {
     this.holdActive = true;
     const sessionId = ++this.sessionCounter;
     this.dispatch({ sessionId, type: 'begin-session' });
+    if (this.dependencies.speech) {
+      this.speechConfigPromise = this.dependencies.speech
+        .getConfig()
+        .then((config) => {
+          this.dispatch({ sessionId, speechMode: config.mode, type: 'speech-mode-resolved' });
+          return config;
+        })
+        .catch(() => null);
+    } else {
+      this.speechConfigPromise = null;
+    }
     void this.requestAndStartCapture(sessionId);
   }
 
@@ -176,6 +217,12 @@ export class VoiceController {
     this.abortController?.abort();
     this.abortController = null;
     this.ephemeralAudio = null;
+    this.capturedAudio = null;
+    this.speechConfigPromise = null;
+    if (this.speechRequestId) {
+      void this.dependencies.speech?.cancel(this.speechRequestId);
+      this.speechRequestId = null;
+    }
     this.dependencies.playback.stop();
     const capture = this.capture;
     this.capture = null;
@@ -190,6 +237,88 @@ export class VoiceController {
     this.dispatch({ type: 'recover' });
   }
 
+  confirmTranscript(transcript: string): boolean {
+    const normalized = transcript.trim();
+    if (
+      !normalized ||
+      this.state.phase !== 'transcribing' ||
+      this.state.transcriptReview !== 'pending'
+    ) {
+      return false;
+    }
+    this.dispatch({
+      sessionId: this.state.sessionId,
+      transcript: normalized,
+      type: 'transcript-confirmed',
+    });
+    return true;
+  }
+
+  beginExternalResponse(): void {
+    this.dispatch({ sessionId: this.state.sessionId, type: 'understanding-finished' });
+  }
+
+  replaceExternalResponse(response: string): void {
+    this.dispatch({ response, sessionId: this.state.sessionId, type: 'response-replaced' });
+  }
+
+  completeExternalResponse(): void {
+    if (this.state.phase !== 'responding_text') {
+      return;
+    }
+    const sessionId = this.state.sessionId;
+    const response = this.state.response;
+    this.dispatch({ sessionId, type: 'speaking-started' });
+    const controller = new AbortController();
+    this.abortController?.abort();
+    this.abortController = controller;
+    void this.dependencies.playback
+      .play(response, controller.signal)
+      .then(() => this.dispatch({ sessionId, type: 'completed' }))
+      .catch((error: unknown) => {
+        if (!isAbortError(error)) {
+          this.dispatch({
+            error: {
+              code: 'playback-failed',
+              message: '语音播放失败，文字回答仍可阅读。',
+            },
+            sessionId,
+            type: 'failed',
+          });
+        }
+      })
+      .finally(() => {
+        if (this.abortController === controller) {
+          this.abortController = null;
+        }
+      });
+  }
+
+  failExternalResponse(message: string): void {
+    if (!['understanding', 'responding_text'].includes(this.state.phase)) {
+      return;
+    }
+    this.dispatch({
+      error: { code: 'transcription-failed', message },
+      sessionId: this.state.sessionId,
+      type: 'failed',
+    });
+  }
+
+  retryTranscription(): void {
+    if (this.state.phase !== 'error' || !this.capturedAudio || !this.dependencies.speech) {
+      return;
+    }
+    const sessionId = this.state.sessionId;
+    this.dispatch({ sessionId, type: 'retry-transcription' });
+    void this.runRealTranscription(sessionId, this.capturedAudio);
+  }
+
+  restartCapture(): void {
+    this.cancel();
+    this.pressStart();
+  }
+
   dispose(): void {
     if (this.disposed) {
       return;
@@ -199,6 +328,12 @@ export class VoiceController {
     this.abortController?.abort();
     this.abortController = null;
     this.ephemeralAudio = null;
+    this.capturedAudio = null;
+    this.speechConfigPromise = null;
+    if (this.speechRequestId) {
+      void this.dependencies.speech?.cancel(this.speechRequestId);
+      this.speechRequestId = null;
+    }
     this.dependencies.playback.stop();
     const capture = this.capture;
     this.capture = null;
@@ -259,7 +394,7 @@ export class VoiceController {
             this.holdActive = false;
             void this.finishCapture(
               sessionId,
-              '已达到最长录音时长，录音已自动结束并进入本地演示流程。',
+              '已达到最长录音时长，录音已自动结束并进入识别流程。',
             );
           }
         },
@@ -300,7 +435,7 @@ export class VoiceController {
       this.dispatch({
         error: {
           code: 'too-short',
-          message: '这段声音太短，没有进入模拟识别。',
+          message: '这段声音太短，没有进入识别。',
         },
         sessionId,
         type: 'failed',
@@ -309,7 +444,43 @@ export class VoiceController {
     }
 
     this.ephemeralAudio = capturedAudio.blob;
+    this.capturedAudio = capturedAudio;
     this.abortController = new AbortController();
+    let speechConfig: SpeechPublicConfig | null;
+    try {
+      speechConfig = this.dependencies.speech
+        ? await (this.speechConfigPromise ?? this.dependencies.speech.getConfig())
+        : null;
+    } catch {
+      this.dispatch({
+        error: {
+          code: 'transcription-failed',
+          message: '无法读取语音识别配置。录音未发送，可以重试或改用文字。',
+        },
+        sessionId,
+        type: 'failed',
+      });
+      return;
+    } finally {
+      this.speechConfigPromise = null;
+    }
+    if (this.dependencies.speech && !speechConfig) {
+      this.dispatch({
+        error: {
+          code: 'transcription-failed',
+          message: '无法读取语音识别配置。录音未发送，可以重试或改用文字。',
+        },
+        sessionId,
+        type: 'failed',
+      });
+      return;
+    }
+    if (speechConfig?.mode === 'real' && this.dependencies.speech) {
+      this.dispatch({ sessionId, speechMode: 'real', type: 'speech-mode-resolved' });
+      this.abortController = null;
+      await this.runRealTranscription(sessionId, capturedAudio);
+      return;
+    }
     try {
       await this.dependencies.runMockLoop({
         callbacks: {
@@ -318,6 +489,7 @@ export class VoiceController {
           onSpeakingStarted: () => this.dispatch({ sessionId, type: 'speaking-started' }),
           onTranscript: (transcript) => {
             this.ephemeralAudio = null;
+            this.capturedAudio = null;
             this.dispatch({ sessionId, transcript, type: 'transcript-ready' });
           },
           onUnderstandingFinished: () =>
@@ -328,6 +500,7 @@ export class VoiceController {
       });
     } catch (error) {
       this.ephemeralAudio = null;
+      this.capturedAudio = null;
       if (!isAbortError(error) && !this.disposed && sessionId === this.state.sessionId) {
         const playbackFailed = isPlaybackPhase(this.state);
         this.dispatch({
@@ -348,6 +521,71 @@ export class VoiceController {
       this.ephemeralAudio = null;
       if (sessionId === this.state.sessionId) {
         this.abortController = null;
+      }
+    }
+  }
+
+  private async runRealTranscription(
+    sessionId: number,
+    capturedAudio: CapturedAudio,
+  ): Promise<void> {
+    const speech = this.dependencies.speech;
+    if (!speech || this.disposed || sessionId !== this.state.sessionId) {
+      return;
+    }
+    const requestId = `speech-${sessionId}-${Date.now().toString(36)}`;
+    this.speechRequestId = requestId;
+    try {
+      const audio = new Uint8Array(await capturedAudio.blob.arrayBuffer());
+      if (this.disposed || sessionId !== this.state.sessionId) {
+        return;
+      }
+      const result = await speech.transcribe({
+        audio,
+        durationMs: capturedAudio.durationMs,
+        mimeType: capturedAudio.mimeType,
+        requestId,
+      });
+      if (
+        this.disposed ||
+        sessionId !== this.state.sessionId ||
+        this.speechRequestId !== requestId
+      ) {
+        return;
+      }
+      if (!result.ok) {
+        if (result.error.code !== 'cancelled') {
+          this.dispatch({
+            error: mapSpeechError(result.error),
+            sessionId,
+            type: 'failed',
+          });
+        }
+        return;
+      }
+      this.ephemeralAudio = null;
+      this.capturedAudio = null;
+      this.dispatch({
+        requiresConfirmation: true,
+        sessionId,
+        speechMode: 'real',
+        transcript: result.transcript,
+        type: 'transcript-ready',
+      });
+    } catch {
+      if (!this.disposed && sessionId === this.state.sessionId) {
+        this.dispatch({
+          error: {
+            code: 'transcription-failed',
+            message: '真实语音识别没有完成，可以重试识别、重新录音或改用文字。',
+          },
+          sessionId,
+          type: 'failed',
+        });
+      }
+    } finally {
+      if (this.speechRequestId === requestId) {
+        this.speechRequestId = null;
       }
     }
   }

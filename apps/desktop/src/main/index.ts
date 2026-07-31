@@ -11,6 +11,10 @@ import { OpenAICompatibleConversationProvider } from './providers/openai-compati
 import { ProviderConfigStore } from './providers/provider-config-store';
 import { registerProviderHandlers } from './providers/provider-ipc';
 import { ProviderService } from './providers/provider-service';
+import { OpenAICompatibleSpeechToTextProvider } from './speech/openai-compatible-speech-provider';
+import { SpeechConfigStore } from './speech/speech-config-store';
+import { registerSpeechHandlers } from './speech/speech-ipc';
+import { SpeechService } from './speech/speech-service';
 
 const isSmokeTest = process.env.JARVIS_SMOKE_TEST === '1';
 const showcaseEvidence = resolveShowcaseEvidenceOptions(process.env);
@@ -50,6 +54,12 @@ async function verifyRendererBridge(window: BrowserWindow): Promise<void> {
       console.log(`JARVIS_PROVIDER_ACCEPTANCE_OK ${JSON.stringify(acceptance)}`);
     }
 
+    if (process.env.JARVIS_SPEECH_ACCEPTANCE === '1') {
+      const { runSpeechAcceptance } = await import('./speech/speech-acceptance');
+      const acceptance = await runSpeechAcceptance(window);
+      console.log(`JARVIS_SPEECH_ACCEPTANCE_OK ${JSON.stringify(acceptance)}`);
+    }
+
     const screenshotPath = process.env.JARVIS_SMOKE_SCREENSHOT;
     if (screenshotPath) {
       const rendererHash = (await window.webContents.executeJavaScript(
@@ -58,7 +68,7 @@ async function verifyRendererBridge(window: BrowserWindow): Promise<void> {
       )) as string;
       console.log(`JARVIS_SHOWCASE_ROUTE ${rendererHash || '(foundation)'}`);
       await new Promise((resolve) => {
-        setTimeout(resolve, 500);
+        setTimeout(resolve, showcaseEvidence.route === 'settings' ? 1_600 : 1_000);
       });
       const screenshot = await window.webContents.capturePage();
       await mkdir(path.dirname(screenshotPath), { recursive: true });
@@ -117,6 +127,14 @@ app.whenReady().then(async () => {
   registerProviderHandlers(
     ipcMain,
     new ProviderService(providerStore, new OpenAICompatibleConversationProvider()),
+  );
+  registerSpeechHandlers(
+    ipcMain,
+    new SpeechService(
+      new SpeechConfigStore(app.getPath('userData'), safeStorage),
+      providerStore,
+      new OpenAICompatibleSpeechToTextProvider(),
+    ),
   );
   await createMainWindow();
 

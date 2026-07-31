@@ -114,7 +114,12 @@ issue and does not authorize work on JAR-006B or JAR-006C.
 - Introduce the vendor-neutral STT contract and one authorized real Chinese STT adapter.
 - Move only the required audio boundary to main while preserving cancellation, privacy disclosure
   and the existing voice state machine.
+- Stage real transcripts in the existing text composer with explicit confirmation; never auto-send.
+- Preserve existing drafts and require explicit replace or append when a transcript conflicts.
+- Keep independent STT credentials or an explicit main-only reference to Conversation credentials.
 - Do not add real TTS or Voice Profile installation.
+- Status: implementation and localhost/Electron acceptance completed on 2026-07-31. Remains Draft
+  until the project owner completes third-party real STT acceptance.
 
 ### JAR-006C — Real text-to-speech and Voice Profile binding
 

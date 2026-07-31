@@ -52,6 +52,14 @@ describe('preload bridge', () => {
         saveConfig: expect.any(Function),
         testConfig: expect.any(Function),
       },
+      speech: {
+        cancel: expect.any(Function),
+        deleteCredential: expect.any(Function),
+        getConfig: expect.any(Function),
+        saveConfig: expect.any(Function),
+        testConfig: expect.any(Function),
+        transcribe: expect.any(Function),
+      },
     });
 
     const exposedApi = electronMocks.exposeInMainWorld.mock.calls[0]?.[1] as

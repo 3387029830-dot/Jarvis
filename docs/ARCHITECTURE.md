@@ -162,3 +162,31 @@ Settings / Conversation renderer
 - Conversation was assessed for splitting but remains in the entry bundle because it shares the
   current voice controller, evidence states and shell. Reassess after voice orchestration is
   extracted rather than introducing lifecycle risk in this slice.
+
+## 11. JAR-006B speech-to-text boundary
+
+```text
+MediaRecorder Blob in Renderer memory
+  → Uint8Array through named preload API
+  → runtime-validated, sender-isolated IPC
+  → SpeechService in Electron main
+  → SpeechToTextProvider
+  → OpenAI-compatible multipart /audio/transcriptions
+```
+
+- `src/shared/speech.ts` is the only cross-process STT contract. It exposes public configuration,
+  typed binary requests, results and metrics, but no credential getter or arbitrary request shape.
+- `SpeechConfigStore` writes `speech-config.v1.json` under Electron userData. It can hold a separate
+  `safeStorage` ciphertext or an explicit `conversation` credential reference; the referenced
+  secret is resolved only in main.
+- Audio is never persisted. Renderer converts the current Blob to `Uint8Array`; main validates
+  MIME, bytes and duration, generates a safe filename, and creates multipart `file`, `model`,
+  `language` and optional `prompt` fields.
+- One failed current recording may remain in Renderer memory for retry. Success, cancel, re-record,
+  disposal or abandonment releases it.
+- Real transcription remains in the canonical `transcribing` phase with `transcriptReview=pending`.
+  `understanding` starts only after explicit confirmation.
+- Conversation receives confirmed text with `source=voice` and `transcriptionEdited`; it never
+  receives raw audio or an unconfirmed transcript.
+- Settings uses mounted Editorial Chapters so unsaved Conversation and STT drafts survive chapter
+  switching. A dirty chapter prompts before navigation without discarding either form.

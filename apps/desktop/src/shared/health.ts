@@ -1,4 +1,5 @@
 import type { JarvisConversationApi, JarvisProviderApi } from './provider';
+import type { JarvisSpeechApi } from './speech';
 
 export const HEALTH_CHECK_CHANNEL = 'jarvis:health-check' as const;
 
@@ -11,6 +12,7 @@ export interface JarvisApi {
   readonly conversation: JarvisConversationApi;
   healthCheck(): Promise<HealthCheckResult>;
   readonly provider: JarvisProviderApi;
+  readonly speech: JarvisSpeechApi;
 }
 
 export function createHealthCheckResult(): HealthCheckResult {

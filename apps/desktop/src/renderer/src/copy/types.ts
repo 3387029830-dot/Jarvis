@@ -70,12 +70,16 @@ export interface ProductCopy {
     readonly holdMode: string;
     readonly holdModeDescription: string;
     readonly mockBadge: string;
+    readonly realBadge: string;
+    readonly realDisclosure: string;
     readonly modeLabel: string;
     readonly noRoundYet: string;
     readonly privacyDetails: readonly string[];
     readonly privacySummary: string;
     readonly responseLabel: string;
     readonly retryAction: string;
+    readonly retryTranscriptionAction: string;
+    readonly rerecordAction: string;
     readonly roundTitle: string;
     readonly state: {
       readonly cancelled: {
@@ -129,6 +133,9 @@ export interface ProductCopy {
       };
     };
     readonly transcriptLabel: string;
+    readonly transcriptReviewAction: string;
+    readonly transcriptReviewHint: string;
+    readonly transcriptReviewLabel: string;
     readonly toggleMode: string;
     readonly toggleModeDescription: string;
     readonly toggleListeningAction: string;

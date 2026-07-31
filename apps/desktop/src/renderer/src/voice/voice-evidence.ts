@@ -2,7 +2,16 @@ import { MOCK_VOICE_CONTENT } from './mock-voice-loop';
 import { initialVoiceState, type VoiceControllerState } from './voice-state';
 
 export type VoiceEvidenceState =
-  'idle' | 'listening' | 'transcribing' | 'responding' | 'speaking' | 'permission-denied';
+  | 'idle'
+  | 'listening'
+  | 'transcribing'
+  | 'responding'
+  | 'speaking'
+  | 'permission-denied'
+  | 'real-transcribing'
+  | 'real-review'
+  | 'real-edited'
+  | 'real-error';
 
 export function parseVoiceEvidenceState(value: string | null): VoiceEvidenceState | null {
   return value === 'idle' ||
@@ -10,7 +19,11 @@ export function parseVoiceEvidenceState(value: string | null): VoiceEvidenceStat
     value === 'transcribing' ||
     value === 'responding' ||
     value === 'speaking' ||
-    value === 'permission-denied'
+    value === 'permission-denied' ||
+    value === 'real-transcribing' ||
+    value === 'real-review' ||
+    value === 'real-edited' ||
+    value === 'real-error'
     ? value
     : null;
 }
@@ -59,6 +72,35 @@ export function createVoiceEvidenceState(evidence: VoiceEvidenceState): VoiceCon
         },
         permission: 'denied',
         phase: 'error',
+      };
+    case 'real-transcribing':
+      return {
+        ...base,
+        durationMs: 6_420,
+        phase: 'transcribing',
+        speechMode: 'real',
+      };
+    case 'real-review':
+    case 'real-edited':
+      return {
+        ...base,
+        durationMs: 6_420,
+        phase: 'transcribing',
+        speechMode: 'real',
+        transcript: '我想继续理解，为什么知识增加以后，行动却不一定变得更容易？',
+        transcriptOriginal: '我想继续理解，为什么知识增加以后，行动却不一定变得更容易？',
+        transcriptReview: 'pending',
+      };
+    case 'real-error':
+      return {
+        ...base,
+        durationMs: 6_420,
+        error: {
+          code: 'transcription-failed',
+          message: '无法连接到语音识别 Provider，可以重试识别、重新录音或改用文字。',
+        },
+        phase: 'error',
+        speechMode: 'real',
       };
   }
 }

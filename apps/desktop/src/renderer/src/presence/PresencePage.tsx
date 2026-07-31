@@ -12,6 +12,7 @@ import { VoiceInteraction } from '../voice/VoiceInteraction';
 import { useVoiceInteractionMode } from '../voice/interaction-mode';
 import { createVoiceEvidenceState } from '../voice/voice-evidence';
 import { useVoiceController } from '../voice/use-voice-controller';
+import { setVoiceTranscriptHandoff } from '../voice/voice-handoff';
 
 function Timestamp({ value }: { value: string }): React.JSX.Element {
   return (
@@ -148,6 +149,10 @@ export function PresencePage(): React.JSX.Element {
           isEvidence={options.voiceEvidence !== null}
           mode={voiceMode}
           onModeChange={setVoiceMode}
+          onTranscriptConfirm={(transcript, transcriptionEdited) => {
+            setVoiceTranscriptHandoff({ transcript, transcriptionEdited });
+            window.location.hash = '/conversation';
+          }}
           reducedMotion={prefersReducedMotion || options.reducedMotion}
           state={voiceState}
           voiceButtonRef={voiceButtonRef}

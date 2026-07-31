@@ -17,6 +17,21 @@ import {
   type ProviderSaveInput,
   type ProviderTestResult,
 } from '../shared/provider';
+import {
+  SPEECH_CANCEL_CHANNEL,
+  SPEECH_DELETE_CREDENTIAL_CHANNEL,
+  SPEECH_GET_CONFIG_CHANNEL,
+  SPEECH_SAVE_CONFIG_CHANNEL,
+  SPEECH_TEST_CONFIG_CHANNEL,
+  SPEECH_TRANSCRIBE_CHANNEL,
+  type SpeechDraftConfig,
+  type SpeechOperationResult,
+  type SpeechPublicConfig,
+  type SpeechSaveInput,
+  type SpeechTestResult,
+  type SpeechTranscriptionRequest,
+  type SpeechTranscriptionResult,
+} from '../shared/speech';
 
 const jarvisApi: JarvisApi = Object.freeze({
   conversation: Object.freeze({
@@ -40,6 +55,18 @@ const jarvisApi: JarvisApi = Object.freeze({
       ipcRenderer.invoke(PROVIDER_SAVE_CONFIG_CHANNEL, input) as Promise<ProviderOperationResult>,
     testConfig: (input: ProviderDraftConfig) =>
       ipcRenderer.invoke(PROVIDER_TEST_CONFIG_CHANNEL, input) as Promise<ProviderTestResult>,
+  }),
+  speech: Object.freeze({
+    cancel: (requestId: string) => ipcRenderer.invoke(SPEECH_CANCEL_CHANNEL, requestId),
+    deleteCredential: () =>
+      ipcRenderer.invoke(SPEECH_DELETE_CREDENTIAL_CHANNEL) as Promise<SpeechOperationResult>,
+    getConfig: () => ipcRenderer.invoke(SPEECH_GET_CONFIG_CHANNEL) as Promise<SpeechPublicConfig>,
+    saveConfig: (input: SpeechSaveInput) =>
+      ipcRenderer.invoke(SPEECH_SAVE_CONFIG_CHANNEL, input) as Promise<SpeechOperationResult>,
+    testConfig: (input: SpeechDraftConfig) =>
+      ipcRenderer.invoke(SPEECH_TEST_CONFIG_CHANNEL, input) as Promise<SpeechTestResult>,
+    transcribe: (request: SpeechTranscriptionRequest) =>
+      ipcRenderer.invoke(SPEECH_TRANSCRIBE_CHANNEL, request) as Promise<SpeechTranscriptionResult>,
   }),
 });
 

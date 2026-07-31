@@ -73,10 +73,17 @@ function Harness({
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const binding = {
+    beginExternalResponse: () => controller.beginExternalResponse(),
     cancel: () => controller.cancel(),
+    completeExternalResponse: () => controller.completeExternalResponse(),
+    confirmTranscript: (transcript: string) => controller.confirmTranscript(transcript),
+    failExternalResponse: (message: string) => controller.failExternalResponse(message),
     pressStart: () => controller.pressStart(),
     recover: () => controller.recover(),
+    replaceExternalResponse: (response: string) => controller.replaceExternalResponse(response),
     release: () => controller.release(),
+    restartCapture: () => controller.restartCapture(),
+    retryTranscription: () => controller.retryTranscription(),
     state,
   };
   return (

@@ -80,4 +80,22 @@ describe('visual evidence options', () => {
     });
     expect(createShowcaseHash(result)).toBe('/settings?state=configured');
   });
+
+  it('creates deterministic JAR-006B settings and reduced-motion voice states', () => {
+    const settings = resolveShowcaseEvidenceOptions({
+      JARVIS_EVIDENCE: '1',
+      JARVIS_EVIDENCE_ROUTE: 'settings',
+      JARVIS_SETTINGS_STATE: 'stt-configured',
+    });
+    expect(createShowcaseHash(settings)).toBe('/settings?state=stt-configured');
+
+    const voice = resolveShowcaseEvidenceOptions({
+      JARVIS_EVIDENCE: '1',
+      JARVIS_EVIDENCE_ROUTE: 'conversation',
+      JARVIS_SHOWCASE_REDUCED_MOTION: '1',
+      JARVIS_VOICE_STATE: 'real-review',
+    });
+    expect(createShowcaseHash(voice)).toContain('voice=real-review');
+    expect(createShowcaseHash(voice)).toContain('motion=reduced');
+  });
 });

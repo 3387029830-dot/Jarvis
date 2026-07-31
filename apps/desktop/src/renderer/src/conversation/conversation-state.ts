@@ -16,6 +16,7 @@ export type ConversationAction =
       readonly sessionId: number;
       readonly source: ConversationSource;
       readonly responseIsMock?: boolean;
+      readonly transcriptionEdited?: boolean;
       readonly userId: string;
     }
   | { readonly type: 'response-chunk'; readonly chunk: string; readonly sessionId: number }
@@ -144,6 +145,9 @@ export function conversationReducer(
             role: 'user',
             source: action.source,
             status: 'complete',
+            ...(action.transcriptionEdited === undefined
+              ? {}
+              : { transcriptionEdited: action.transcriptionEdited }),
           },
           {
             content: '',

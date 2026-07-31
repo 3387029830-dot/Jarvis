@@ -20,6 +20,7 @@ export interface ConversationTurn {
   readonly role: 'jarvis' | 'user';
   readonly source: ConversationSource;
   readonly status: ConversationTurnStatus;
+  readonly transcriptionEdited?: boolean;
 }
 
 export interface ConversationScenario {
@@ -45,4 +46,6 @@ export interface VoiceTimelineSnapshot {
   readonly response: string;
   readonly sessionId: number;
   readonly transcript: string;
+  readonly speechMode?: 'mock' | 'real';
+  readonly transcriptReview?: 'confirmed' | 'none' | 'pending';
 }

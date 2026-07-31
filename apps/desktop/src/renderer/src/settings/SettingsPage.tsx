@@ -7,6 +7,7 @@ import type {
 } from '../../../shared/provider';
 import { Badge, Button, Dialog, Panel } from '../design-system';
 import { AppShell } from '../shell/AppShell';
+import { SpeechSettingsChapter } from './SpeechSettingsChapter';
 import './settings.css';
 
 type Feedback =
@@ -86,6 +87,11 @@ export function SettingsPage(): React.JSX.Element {
     evidence ? null : 'load',
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [activeChapter, setActiveChapter] = useState<'conversation' | 'speech'>(() =>
+    window.location.hash.includes('state=stt-') ? 'speech' : 'conversation',
+  );
+  const [speechDirty, setSpeechDirty] = useState(false);
+  const [pendingChapter, setPendingChapter] = useState<'conversation' | 'speech' | null>(null);
 
   useEffect(() => {
     if (evidence) {
@@ -133,6 +139,23 @@ export function SettingsPage(): React.JSX.Element {
     baseUrl: baseUrl.trim(),
     model: model.trim(),
   };
+  const conversationDirty =
+    Boolean(apiKey.trim()) ||
+    baseUrl.trim() !== saved.baseUrl ||
+    model.trim() !== saved.model ||
+    mode !== saved.mode;
+
+  function requestChapter(nextChapter: 'conversation' | 'speech'): void {
+    if (nextChapter === activeChapter) {
+      return;
+    }
+    const activeDirty = activeChapter === 'conversation' ? conversationDirty : speechDirty;
+    if (activeDirty) {
+      setPendingChapter(nextChapter);
+      return;
+    }
+    setActiveChapter(nextChapter);
+  }
 
   async function testConnection(): Promise<void> {
     setBusy('test');
@@ -189,19 +212,41 @@ export function SettingsPage(): React.JSX.Element {
       <main className="settings-page">
         <header className="settings-hero">
           <div>
-            <p>Settings · Provider foundation</p>
-            <h1>连接真实的文字思考</h1>
+            <p>Settings · Provider paths</p>
+            <h1>连接真实的理解路径</h1>
             <span>
-              网络请求与 API Key 始终留在 Electron main
-              process。当前只接通文字回答，不包含语音识别或语音合成。
+              Conversation 与语音识别分别配置，网络请求与完整 API Key 始终留在 Electron main
+              process。真实语音合成仍未接通。
             </span>
           </div>
-          <Badge tone={saved.mode === 'real' ? 'success' : 'warning'}>
-            {saved.mode === 'real' ? '真实文字模式' : '本地 Mock 模式'}
-          </Badge>
+          <Badge tone="accent">JAR-006B</Badge>
         </header>
 
-        <div className="settings-layout">
+        <nav aria-label="Provider 设置章节" className="settings-chapters">
+          <button
+            aria-current={activeChapter === 'conversation' ? 'page' : undefined}
+            onClick={() => requestChapter('conversation')}
+            type="button"
+          >
+            <span>01</span>
+            <strong>文字对话</strong>
+            <small>Conversation</small>
+            {conversationDirty ? <i>未保存</i> : null}
+          </button>
+          <button
+            aria-current={activeChapter === 'speech' ? 'page' : undefined}
+            onClick={() => requestChapter('speech')}
+            type="button"
+          >
+            <span>02</span>
+            <strong>语音识别</strong>
+            <small>Speech-to-Text</small>
+            {speechDirty ? <i>未保存</i> : null}
+          </button>
+          <p>章节切换会保留本次打开应用期间尚未保存的表单内容。</p>
+        </nav>
+
+        <div className="settings-layout" hidden={activeChapter !== 'conversation'}>
           <Panel className="settings-provider">
             <header>
               <p>OpenAI-compatible</p>
@@ -357,6 +402,8 @@ export function SettingsPage(): React.JSX.Element {
             </Panel>
           </aside>
         </div>
+
+        <SpeechSettingsChapter hidden={activeChapter !== 'speech'} onDirtyChange={setSpeechDirty} />
       </main>
 
       <Dialog
@@ -375,6 +422,36 @@ export function SettingsPage(): React.JSX.Element {
           </Button>
           <Button error onClick={() => void deleteCredential()}>
             确认删除
+          </Button>
+        </div>
+      </Dialog>
+      <Dialog
+        description="当前章节的修改尚未保存。继续切换不会丢弃它们；内容会保留到本次应用关闭。"
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingChapter(null);
+          }
+        }}
+        open={pendingChapter !== null}
+        title="切换到另一个设置章节？"
+      >
+        <div className="settings-delete-actions">
+          <Button
+            data-dialog-initial-focus
+            onClick={() => setPendingChapter(null)}
+            variant="secondary"
+          >
+            留在当前章节
+          </Button>
+          <Button
+            onClick={() => {
+              if (pendingChapter) {
+                setActiveChapter(pendingChapter);
+              }
+              setPendingChapter(null);
+            }}
+          >
+            保留修改并切换
           </Button>
         </div>
       </Dialog>

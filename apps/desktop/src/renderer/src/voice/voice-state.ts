@@ -17,7 +17,14 @@ export type VoiceErrorCode =
   | 'unsupported'
   | 'recording-failed'
   | 'too-short'
-  | 'playback-failed';
+  | 'playback-failed'
+  | 'audio-too-large'
+  | 'unsupported-audio-format'
+  | 'empty-transcript'
+  | 'transcription-failed';
+
+export type VoiceSpeechMode = 'mock' | 'real';
+export type TranscriptReviewState = 'none' | 'pending' | 'confirmed';
 
 export interface VoiceError {
   readonly code: VoiceErrorCode;
@@ -34,7 +41,11 @@ export interface VoiceControllerState {
   readonly phase: VoicePhase;
   readonly response: string;
   readonly sessionId: number;
+  readonly speechMode: VoiceSpeechMode;
   readonly transcript: string;
+  readonly transcriptOriginal: string;
+  readonly transcriptReview: TranscriptReviewState;
+  readonly transcriptionEdited: boolean;
 }
 
 export const initialVoiceState: VoiceControllerState = {
@@ -47,7 +58,11 @@ export const initialVoiceState: VoiceControllerState = {
   phase: 'idle',
   response: '',
   sessionId: 0,
+  speechMode: 'mock',
   transcript: '',
+  transcriptOriginal: '',
+  transcriptReview: 'none',
+  transcriptionEdited: false,
 };
 
 export type VoiceAction =
@@ -71,9 +86,27 @@ export type VoiceAction =
       readonly notice?: string;
       readonly sessionId: number;
     }
-  | { readonly type: 'transcript-ready'; readonly sessionId: number; readonly transcript: string }
+  | {
+      readonly type: 'transcript-ready';
+      readonly requiresConfirmation?: boolean;
+      readonly sessionId: number;
+      readonly speechMode?: VoiceSpeechMode;
+      readonly transcript: string;
+    }
+  | {
+      readonly type: 'speech-mode-resolved';
+      readonly sessionId: number;
+      readonly speechMode: VoiceSpeechMode;
+    }
+  | {
+      readonly type: 'transcript-confirmed';
+      readonly sessionId: number;
+      readonly transcript: string;
+    }
   | { readonly type: 'understanding-finished'; readonly sessionId: number }
   | { readonly type: 'response-chunk'; readonly chunk: string; readonly sessionId: number }
+  | { readonly type: 'response-replaced'; readonly response: string; readonly sessionId: number }
+  | { readonly type: 'retry-transcription'; readonly sessionId: number }
   | { readonly type: 'speaking-started'; readonly sessionId: number }
   | { readonly type: 'completed'; readonly sessionId: number }
   | { readonly type: 'interrupted'; readonly sessionId: number }
@@ -157,7 +190,27 @@ export function voiceReducer(
       if (state.phase !== 'transcribing') {
         return state;
       }
-      return { ...state, phase: 'understanding', transcript: action.transcript };
+      return {
+        ...state,
+        phase: action.requiresConfirmation ? 'transcribing' : 'understanding',
+        speechMode: action.speechMode ?? state.speechMode,
+        transcript: action.transcript,
+        transcriptOriginal: action.transcript,
+        transcriptReview: action.requiresConfirmation ? 'pending' : 'confirmed',
+      };
+    case 'speech-mode-resolved':
+      return { ...state, speechMode: action.speechMode };
+    case 'transcript-confirmed':
+      if (state.phase !== 'transcribing' || state.transcriptReview !== 'pending') {
+        return state;
+      }
+      return {
+        ...state,
+        phase: 'understanding',
+        transcript: action.transcript,
+        transcriptReview: 'confirmed',
+        transcriptionEdited: action.transcript !== state.transcriptOriginal,
+      };
     case 'understanding-finished':
       if (state.phase !== 'understanding') {
         return state;
@@ -168,6 +221,25 @@ export function voiceReducer(
         return state;
       }
       return { ...state, response: `${state.response}${action.chunk}` };
+    case 'response-replaced':
+      if (state.phase !== 'responding_text' || state.response === action.response) {
+        return state;
+      }
+      return { ...state, response: action.response };
+    case 'retry-transcription':
+      if (state.phase !== 'error') {
+        return state;
+      }
+      return {
+        ...state,
+        error: null,
+        notice: '正在重新识别上一次录音。',
+        phase: 'transcribing',
+        transcript: '',
+        transcriptOriginal: '',
+        transcriptReview: 'none',
+        transcriptionEdited: false,
+      };
     case 'speaking-started':
       if (state.phase !== 'responding_text') {
         return state;

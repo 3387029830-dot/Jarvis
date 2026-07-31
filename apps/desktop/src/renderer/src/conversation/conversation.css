@@ -386,6 +386,56 @@
   outline-offset: var(--focus-ring-offset);
 }
 
+.conversation-composer__transcript-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--space-1) var(--space-3);
+}
+
+.conversation-composer__transcript-status > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.conversation-composer__transcript-status strong {
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+}
+
+.conversation-composer__transcript-status small {
+  line-height: var(--line-height-cjk);
+}
+
+.conversation-composer__draft-conflict {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
+  border: var(--border-width-hairline) solid
+    color-mix(in srgb, var(--color-warning) 28%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-warning) 4%, transparent);
+}
+
+.conversation-composer__draft-conflict p {
+  max-height: 5.5rem;
+  margin: 0;
+  overflow: auto;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-cjk);
+}
+
+.conversation-composer__draft-conflict > div,
+.conversation-composer__generation-controls > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
 .conversation-composer__generation-controls {
   display: flex;
   align-items: center;
@@ -396,6 +446,10 @@
 
 .conversation-composer__generation-controls .ds-button {
   min-width: 7.5rem;
+}
+
+.conversation-composer__generation-controls > div .ds-button--quiet {
+  min-width: auto;
 }
 
 .conversation-composer__text small {
@@ -410,8 +464,8 @@
 
 .conversation-composer .voice-experience {
   display: grid;
-  grid-template-columns: auto auto minmax(11rem, 1fr);
-  grid-template-rows: auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto;
   align-items: center;
   gap: var(--space-2) var(--space-3);
   min-width: 0;
@@ -433,16 +487,16 @@
 }
 
 .conversation-composer .voice-round__status {
-  grid-column: 3;
-  grid-row: 1;
+  grid-column: 1 / -1;
+  grid-row: 2;
   min-height: 2.75rem;
   padding: var(--space-2) var(--space-3);
 }
 
 .conversation-composer .voice-waveform {
   display: none;
-  grid-column: 3;
-  grid-row: 2;
+  grid-column: 1 / -1;
+  grid-row: 3;
   min-height: 2.75rem;
   padding: var(--space-2) var(--space-3);
 }
@@ -452,15 +506,15 @@
 }
 
 .conversation-composer .voice-round__actions {
-  grid-column: 3;
-  grid-row: 2;
+  grid-column: 1 / -1;
+  grid-row: 3;
   margin: 0;
   min-height: 2.75rem;
 }
 
 .conversation-composer .voice-demo-disclosure {
-  grid-column: 1 / 3;
-  grid-row: 2;
+  grid-column: 1 / -1;
+  grid-row: 4;
   margin: 0;
   font-size: var(--font-size-2xs);
   line-height: var(--line-height-cjk);

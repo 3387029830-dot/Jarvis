@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useState,
   type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
@@ -47,14 +48,26 @@ function VoiceWaveform({
 function CurrentVoiceRound({
   mode,
   onCancel,
+  onConfirmTranscript,
   onRecover,
+  onRestartCapture,
+  onRetryTranscription,
   reducedMotion,
+  reviewDraft,
+  reviewMode,
+  setReviewDraft,
   state,
 }: {
   mode: VoiceInteractionMode;
   onCancel(): void;
+  onConfirmTranscript(): void;
   onRecover(): void;
+  onRestartCapture(): void;
+  onRetryTranscription(): void;
   reducedMotion: boolean;
+  reviewDraft: string;
+  reviewMode: 'external' | 'inline';
+  setReviewDraft(value: string): void;
   state: VoiceControllerState;
 }): React.JSX.Element {
   const presentation = presentVoiceState(state, copy.voice.state);
@@ -65,6 +78,16 @@ function CurrentVoiceRound({
   const canCancel = ['listening', 'transcribing', 'understanding', 'responding_text'].includes(
     state.phase,
   );
+  const isPendingReview =
+    state.speechMode === 'real' &&
+    state.phase === 'transcribing' &&
+    state.transcriptReview === 'pending';
+  const canRetryTranscription = [
+    'audio-too-large',
+    'empty-transcript',
+    'transcription-failed',
+    'unsupported-audio-format',
+  ].includes(state.error?.code ?? '');
 
   return (
     <section
@@ -77,7 +100,13 @@ function CurrentVoiceRound({
           <p>{copy.voice.roundTitle}</p>
           <h2 id="voice-round-title">{presentation.label}</h2>
         </div>
-        <Badge tone={state.phase === 'error' ? 'danger' : 'warning'}>{copy.voice.mockBadge}</Badge>
+        <Badge
+          tone={
+            state.phase === 'error' ? 'danger' : state.speechMode === 'real' ? 'success' : 'warning'
+          }
+        >
+          {state.speechMode === 'real' ? copy.voice.realBadge : copy.voice.mockBadge}
+        </Badge>
       </header>
 
       <div aria-atomic="true" aria-live="polite" className="voice-round__status" role="status">
@@ -98,9 +127,33 @@ function CurrentVoiceRound({
 
       {state.notice ? <p className="voice-round__notice">{state.notice}</p> : null}
 
-      {state.transcript ? (
+      {isPendingReview && reviewMode === 'inline' ? (
+        <div className="voice-round__transcript voice-round__transcript--review">
+          <label htmlFor="voice-transcript-review">{copy.voice.transcriptReviewLabel}</label>
+          <textarea
+            autoFocus
+            id="voice-transcript-review"
+            onChange={(event) => setReviewDraft(event.target.value)}
+            rows={4}
+            value={reviewDraft}
+          />
+          <small>{copy.voice.transcriptReviewHint}</small>
+          <div className="voice-round__review-actions">
+            <Button disabled={!reviewDraft.trim()} onClick={onConfirmTranscript} size="small">
+              {copy.voice.transcriptReviewAction}
+            </Button>
+            <Button onClick={onRestartCapture} size="small" variant="secondary">
+              {copy.voice.rerecordAction}
+            </Button>
+          </div>
+        </div>
+      ) : state.transcript && !isPendingReview ? (
         <article className="voice-round__transcript">
-          <span>{copy.voice.transcriptLabel}</span>
+          <span>
+            {state.speechMode === 'real'
+              ? copy.voice.transcriptReviewLabel
+              : copy.voice.transcriptLabel}
+          </span>
           <p>{state.transcript}</p>
         </article>
       ) : null}
@@ -124,8 +177,15 @@ function CurrentVoiceRound({
         ) : null}
         {state.phase === 'error' ? (
           <>
-            <Button onClick={onRecover} size="small" variant="secondary">
-              {copy.voice.retryAction}
+            <Button
+              onClick={canRetryTranscription ? onRetryTranscription : onRecover}
+              size="small"
+              variant="secondary"
+            >
+              {canRetryTranscription ? copy.voice.retryTranscriptionAction : copy.voice.retryAction}
+            </Button>
+            <Button onClick={onRestartCapture} size="small" variant="quiet">
+              {copy.voice.rerecordAction}
             </Button>
             <Button
               onClick={() =>
@@ -151,9 +211,11 @@ export interface VoiceInteractionProps {
   readonly controller: VoiceControllerBinding;
   readonly isEvidence: boolean;
   readonly mode: VoiceInteractionMode;
+  readonly onTranscriptConfirm?: (transcript: string, edited: boolean) => void;
   readonly onModeChange: (mode: VoiceInteractionMode) => void;
   readonly reducedMotion: boolean;
   readonly state: VoiceControllerState;
+  readonly transcriptReviewMode?: 'external' | 'inline';
   readonly voiceButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
@@ -162,10 +224,22 @@ export function VoiceInteraction({
   isEvidence,
   mode,
   onModeChange,
+  onTranscriptConfirm,
   reducedMotion,
   state,
+  transcriptReviewMode = 'inline',
   voiceButtonRef,
 }: VoiceInteractionProps): React.JSX.Element {
+  const reviewKey = `${state.sessionId}:${state.transcriptOriginal}`;
+  const [reviewDraftState, setReviewDraftState] = useState({
+    key: reviewKey,
+    value: state.transcript,
+  });
+  const reviewDraft =
+    reviewDraftState.key === reviewKey ? reviewDraftState.value : state.transcript;
+  const setReviewDraft = (value: string): void => {
+    setReviewDraftState({ key: reviewKey, value });
+  };
   const interactionEnabled =
     state.permission === 'requesting' ||
     ['idle', 'listening', 'speaking', 'error'].includes(state.phase);
@@ -288,13 +362,26 @@ export function VoiceInteraction({
         ))}
       </fieldset>
 
-      <p className="voice-demo-disclosure">{copy.voice.demoDisclosure}</p>
+      <p className="voice-demo-disclosure">
+        {state.speechMode === 'real' ? copy.voice.realDisclosure : copy.voice.demoDisclosure}
+      </p>
 
       <CurrentVoiceRound
         mode={mode}
         onCancel={controller.cancel}
+        onConfirmTranscript={() => {
+          const edited = reviewDraft.trim() !== state.transcriptOriginal;
+          if (controller.confirmTranscript(reviewDraft)) {
+            onTranscriptConfirm?.(reviewDraft.trim(), edited);
+          }
+        }}
         onRecover={controller.recover}
+        onRestartCapture={controller.restartCapture}
+        onRetryTranscription={controller.retryTranscription}
         reducedMotion={reducedMotion}
+        reviewDraft={reviewDraft}
+        reviewMode={transcriptReviewMode}
+        setReviewDraft={setReviewDraft}
         state={state}
       />
 
