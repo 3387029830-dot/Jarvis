@@ -510,7 +510,8 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
   二进制 IPC、multipart、中文转录、取消、Key 末四位和清理。
 - 1440×900、1024×900、200% 缩放和 reduced-motion：生产 Electron 视觉检查通过。
 - format、lint、typecheck、test、build、smoke：最终质量门禁全部通过。
-- GitHub CI：将在 Draft PR 推送后确认。
+- GitHub CI：Draft PR #5 首轮 Quality gates 通过（run `30605983259`，1 分 11 秒）；
+  最终文档提交后再次确认。
 
 ### 视觉证据
 

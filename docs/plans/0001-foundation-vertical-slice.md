@@ -584,6 +584,9 @@ For JAR-005 specifically:
 - 2026-07-31: Final local format check, lint, strict typecheck, 141 tests, production build and
   Electron IPC smoke passed. A final production Electron localhost STT run again returned
   `JARVIS_SPEECH_ACCEPTANCE_OK`, and all evidence images were regenerated from that exact source.
+- 2026-07-31: Published implementation commit `629a61c` to Draft PR #5. GitHub Actions Quality
+  gates run `30605983259` passed in 1 minute 11 seconds. The PR remains Draft until project-owner
+  third-party real STT acceptance; no JAR-006C branch or implementation was created.
 
 ## JAR-006B deviations and remaining gate
 
