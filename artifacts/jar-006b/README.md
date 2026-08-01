@@ -32,6 +32,12 @@
 typed binary IPC、multipart `/audio/transcriptions`、中文结果、取消、遮罩和凭据删除，
 日志返回 `JARVIS_SPEECH_ACCEPTANCE_OK`。
 
+项目所有者随后使用自己的第三方 STT Provider 完成最终手工验收：真实麦克风中文、数字
+和英文缩写识别基本准确；真实 Provider 标识、待确认、编辑、voice 来源元数据、草稿冲突
+处理、取消无迟到结果、重新识别、真实 Conversation 串联、重启配置、Key 脱敏和音频资源
+释放均通过。该验收不保存真实 Key、私人录音、私人转录或 Provider 回答，因此没有新增
+包含私人内容的截图。
+
 ## 复现
 
 先运行 `corepack pnpm build`，再设置以下环境变量并执行 `corepack pnpm smoke`：
@@ -52,6 +58,6 @@ corepack pnpm smoke
 
 ## 当前不足
 
-- 项目所有者尚未用私人第三方 STT Provider 完成最终手工验收，因此 PR 保持 Draft。
-- 不同兼容服务的 MIME、语言、usage 和错误行为仍可能不同。
+- 项目所有者的第三方真实 STT Provider 最终手工验收已通过。
+- 不同兼容服务的 MIME、语言、usage 和错误行为仍可能不同；当前结论不代表所有 Provider。
 - real TTS 与 Voice Profile binding 不属于本轮，回答播放仍是明确的本地演示路径。

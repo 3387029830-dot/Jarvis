@@ -118,8 +118,8 @@ issue and does not authorize work on JAR-006B or JAR-006C.
 - Preserve existing drafts and require explicit replace or append when a transcript conflicts.
 - Keep independent STT credentials or an explicit main-only reference to Conversation credentials.
 - Do not add real TTS or Voice Profile installation.
-- Status: implementation and localhost/Electron acceptance completed on 2026-07-31. Remains Draft
-  until the project owner completes third-party real STT acceptance.
+- Status: completed on 2026-08-01 after implementation, localhost/production Electron acceptance
+  and project-owner third-party real STT acceptance. This does not authorize JAR-006C work.
 
 ### JAR-006C — Real text-to-speech and Voice Profile binding
 

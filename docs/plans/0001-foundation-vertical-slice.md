@@ -587,8 +587,20 @@ For JAR-005 specifically:
 - 2026-07-31: Published implementation commit `629a61c` to Draft PR #5. GitHub Actions Quality
   gates run `30605983259` passed in 1 minute 11 seconds. The PR remains Draft until project-owner
   third-party real STT acceptance; no JAR-006C branch or implementation was created.
+- 2026-08-01: The project owner completed third-party real STT acceptance with a private Provider.
+  Connection, Chinese/digit/English-abbreviation transcription, explicit review/editing, voice
+  metadata, non-destructive draft handling, cancellation without late results, re-record/retry,
+  real Conversation chaining, restart persistence, suffix-only Key display, privacy inspection and
+  microphone/audio cleanup all passed. No private credential, recording or transcript was added to
+  the repository.
+- 2026-08-01: JAR-006B is accepted as complete. The remaining release steps are updated Chinese
+  documentation and PR body, repeated local/CI quality gates, Ready transition, squash merge and
+  local/remote branch cleanup. JAR-006C remains explicitly excluded.
+- 2026-08-01: Final local closeout gates passed: formatting, lint, strict typecheck, 141 tests across
+  40 files, production build and Electron IPC smoke (`JARVIS_IPC_SMOKE_OK`). The renderer entry
+  remains 726.64 kB; no bundle refactor was added to this closeout.
 
-## JAR-006B deviations and remaining gate
+## JAR-006B deviations and final acceptance
 
 - The approved design used Editorial Chapters rather than one long Settings form. Both chapter
   components remain mounted so unsaved state survives navigation; a dirty chapter prompts without
@@ -597,6 +609,8 @@ For JAR-005 specifically:
   conflict buffer is still required when text already exists so the recording cannot overwrite it.
 - No dependency or vendor SDK was added. Native fetch, FormData, Blob and typed IPC satisfy the
   adapter requirement with a smaller security surface.
-- The repository has no real third-party STT credential. Local HTTP and production Electron
-  acceptance are complete, but JAR-006B remains Draft until the project owner validates their own
-  Provider. JAR-006C is explicitly excluded.
+- The repository has no real third-party STT credential and intentionally stores no private audio
+  or transcript evidence. The project owner completed the private Provider gate outside the
+  repository on 2026-08-01; local deterministic evidence remains reproducible without secrets.
+- JAR-006B is complete after the project-owner gate. JAR-006C is explicitly excluded from this
+  closeout and has not been started.

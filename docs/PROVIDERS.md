@@ -2,9 +2,9 @@
 
 ## 当前范围
 
-JAR-006A 实现真实文字 Conversation。JAR-006B 已实现真实 STT 代码与本地验收，第三方
-真实 STT Provider 最终验收仍待项目所有者完成。真实 TTS 与 Voice Profile Provider
-binding 属于 JAR-006C。
+JAR-006A 已实现真实文字 Conversation。JAR-006B 已完成真实 STT 代码、本地验收、生产
+Electron 验收和项目所有者第三方真实 STT Provider 手工验收。真实 TTS 与 Voice
+Profile Provider binding 属于尚未开始的 JAR-006C。
 
 当前适配器名为 `OpenAICompatibleConversationProvider`，实现 OpenAI-compatible Chat
 Completions SSE，但核心契约不绑定 OpenAI、OpenRouter 或某个模型。模型 ID 由用户填写，

@@ -7,7 +7,7 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 ## 当前版本
 
 - 软件包版本：`0.1.0`
-- 当前里程碑：**JAR-006B — 真实语音识别（代码与本地验收完成，第三方真实 Provider 验收待完成）**
+- 当前里程碑：**JAR-006B — 真实语音识别（已完成）**
 - 产品默认语言：简体中文
 - 当前真实能力与 Mock 边界：[docs/STATUS.md](docs/STATUS.md)
 
@@ -40,14 +40,16 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 - [x] reduced-motion 与低性能静态 Orb 回退
 - [x] format、lint、typecheck、test、build、smoke 与 GitHub CI
 
-## 正在开发
+## 当前开发阶段
 
-**JAR-006B：真实语音识别** 已完成代码、本地假 Provider 和生产 Electron 验收。真实模式
+**JAR-006B：真实语音识别** 已完成代码、本地假 Provider、生产 Electron 和项目所有者
+第三方真实 STT Provider 验收。真实模式
 会把本次录音经二进制 IPC 交给 main process，再调用 OpenAI-compatible
 `/audio/transcriptions`；结果先进入现有文字区等待用户确认，不会自动发给 Conversation。
 
 如果文字区已有草稿，Jarvis 默认保留原文，并要求明确选择“替换草稿”或“追加转录”。
-本轮仍保持 Draft：项目所有者尚未用自己的第三方 STT Provider 完成最终手工验收。
+项目所有者已验证真实麦克风中文、数字与英文缩写转录、取消、草稿保护、重启后配置恢复、
+Key 脱敏以及音频资源释放。真实凭据、私人录音和私人转录均未进入仓库。
 
 真实 TTS、Voice Profile Provider binding、持久化和认知提取仍未实现。Mock STT 仍可
 独立使用，Conversation 的 Mock / real 配置也与 STT 独立。请以
@@ -137,7 +139,7 @@ corepack pnpm smoke
 5. JAR-005：Conversation 空间 — 已完成
 6. JAR-006：Provider contracts 与一条真实语音路径
    - JAR-006A：Provider 基础与真实文字对话 — 已完成
-   - JAR-006B：真实 STT — 代码与本地验收完成，第三方真实 Provider 验收待完成
+   - JAR-006B：真实 STT — 已完成
    - JAR-006C：真实 TTS 与 Voice Profile binding — 未开始
 7. JAR-007 及以后：本地持久化、认知事件、星图、演变与 Obsidian 导出
 
