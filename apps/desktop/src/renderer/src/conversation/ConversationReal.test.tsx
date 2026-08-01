@@ -56,6 +56,14 @@ beforeEach(() => {
         saveConfig: vi.fn(),
         testConfig: vi.fn(),
       },
+      speech: {
+        cancel: vi.fn(),
+        deleteCredential: vi.fn(),
+        getConfig: vi.fn(),
+        saveConfig: vi.fn(),
+        testConfig: vi.fn(),
+        transcribe: vi.fn(),
+      },
     } satisfies JarvisApi,
   });
 });

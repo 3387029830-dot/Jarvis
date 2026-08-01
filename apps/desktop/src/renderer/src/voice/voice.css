@@ -273,6 +273,47 @@
   border-top: var(--border-width-hairline) solid var(--color-border-subtle);
 }
 
+.voice-round__transcript--review {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.voice-round__transcript--review > label {
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.voice-round__transcript--review textarea {
+  width: 100%;
+  min-height: 7rem;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width-hairline) solid var(--color-border-interactive);
+  border-radius: var(--radius-sm);
+  outline: none;
+  color: var(--color-text-primary);
+  background: var(--color-bg-root);
+  font: inherit;
+  line-height: var(--line-height-cjk);
+  resize: vertical;
+}
+
+.voice-round__transcript--review textarea:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-border-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.voice-round__transcript--review > small {
+  color: var(--color-text-muted);
+  line-height: var(--line-height-cjk);
+}
+
+.voice-round__review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .voice-round__transcript p,
 .voice-round__response p {
   max-width: var(--content-width-readable);

@@ -117,4 +117,23 @@ describe('conversationReducer', () => {
       status: 'cancelled',
     });
   });
+
+  it('keeps edited confirmed transcription as a voice-sourced user turn', () => {
+    const state = reduce([
+      {
+        content: '修正后的语音转录',
+        createdAt: '2026-07-31T04:40:00.000Z',
+        responseId: 'voice-submit-jarvis',
+        sessionId: 9,
+        source: 'voice',
+        transcriptionEdited: true,
+        type: 'submit',
+        userId: 'voice-submit-user',
+      },
+    ]);
+    expect(state.turns.find((turn) => turn.id === 'voice-submit-user')).toMatchObject({
+      source: 'voice',
+      transcriptionEdited: true,
+    });
+  });
 });

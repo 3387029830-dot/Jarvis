@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { SpeechPublicConfig, SpeechTranscriptionResult } from '../../../shared/speech';
 import type { LocalPlayback } from './local-playback';
 import type { MockVoiceLoopOptions } from './mock-voice-loop';
 import type { CaptureCallbacks, VoiceCaptureSession } from './voice-capture';
@@ -31,6 +32,7 @@ function createDependencies(options?: {
   readonly durationMs?: number;
   readonly requestMicrophone?: () => Promise<MediaStream>;
   readonly runMockLoop?: (loop: MockVoiceLoopOptions) => Promise<void>;
+  readonly speech?: VoiceControllerDependencies['speech'];
 }) {
   let captureCallbacks: CaptureCallbacks | undefined;
   const capture: VoiceCaptureSession = {
@@ -62,6 +64,7 @@ function createDependencies(options?: {
         callbacks.onSpeakingStarted();
         callbacks.onCompleted();
       }),
+    ...(options?.speech ? { speech: options.speech } : {}),
     setTimeout: vi.fn((callback) => {
       callback();
       return 1;
@@ -73,6 +76,34 @@ function createDependencies(options?: {
     dependencies,
     getCaptureCallbacks: () => captureCallbacks,
     playback,
+  };
+}
+
+const realSpeechConfig: SpeechPublicConfig = {
+  baseUrl: 'https://speech.example/v1',
+  credentialSource: 'independent',
+  hasCredential: true,
+  keySuffix: '1357',
+  language: 'zh',
+  lastTestedAt: '2026-07-31T08:00:00.000Z',
+  mode: 'real',
+  model: 'speech-model',
+  providerId: 'openai-compatible',
+  timeoutMs: 45_000,
+};
+
+function successfulTranscription(transcript: string): SpeechTranscriptionResult {
+  return {
+    metrics: {
+      audioBytes: 5,
+      audioDurationMs: 800,
+      providerId: 'openai-compatible',
+      totalMs: 12,
+      uploadCompletedMs: 4,
+    },
+    ok: true,
+    requestId: 'request-1',
+    transcript,
   };
 }
 
@@ -223,5 +254,114 @@ describe('VoiceController', () => {
       error: { code: 'playback-failed' },
       response: '仍可阅读的回答',
     });
+  });
+
+  it('stages real transcription for confirmation and never runs the Mock loop', async () => {
+    const speech = {
+      cancel: vi.fn(async () => undefined),
+      getConfig: vi.fn(async () => realSpeechConfig),
+      transcribe: vi.fn(async () => successfulTranscription('真实转录文字')),
+    };
+    const { dependencies } = createDependencies({ speech });
+    const controller = new VoiceController(dependencies);
+    controller.pressStart();
+    await vi.waitFor(() => expect(controller.getSnapshot().phase).toBe('listening'));
+    controller.release();
+    await vi.waitFor(() =>
+      expect(controller.getSnapshot()).toMatchObject({
+        phase: 'transcribing',
+        speechMode: 'real',
+        transcript: '真实转录文字',
+        transcriptReview: 'pending',
+      }),
+    );
+    expect(dependencies.runMockLoop).not.toHaveBeenCalled();
+
+    expect(controller.confirmTranscript('真实转录文字，已经修正。')).toBe(true);
+    expect(controller.getSnapshot()).toMatchObject({
+      phase: 'understanding',
+      transcriptionEdited: true,
+    });
+  });
+
+  it('cancels a real transcription and ignores its late result', async () => {
+    const transcription = deferred<SpeechTranscriptionResult>();
+    const speech = {
+      cancel: vi.fn(async () => undefined),
+      getConfig: vi.fn(async () => realSpeechConfig),
+      transcribe: vi.fn(() => transcription.promise),
+    };
+    const { dependencies } = createDependencies({ speech });
+    const controller = new VoiceController(dependencies);
+    controller.pressStart();
+    await vi.waitFor(() => expect(controller.getSnapshot().phase).toBe('listening'));
+    controller.release();
+    await vi.waitFor(() => expect(speech.transcribe).toHaveBeenCalledOnce());
+    controller.cancel();
+    expect(speech.cancel).toHaveBeenCalledOnce();
+
+    transcription.resolve(successfulTranscription('不应出现的迟到文字'));
+    await Promise.resolve();
+    expect(controller.getSnapshot().transcript).toBe('');
+    expect(controller.getSnapshot().phase).toBe('idle');
+  });
+
+  it('retains one failed recording for retry and releases it after success', async () => {
+    const speech = {
+      cancel: vi.fn(async () => undefined),
+      getConfig: vi.fn(async () => realSpeechConfig),
+      transcribe: vi
+        .fn()
+        .mockResolvedValueOnce({
+          error: {
+            code: 'network',
+            message: '网络失败',
+            providerId: 'openai-compatible',
+            requestId: 'request-1',
+            retryable: true,
+            safeTechnicalSummary: 'network',
+          },
+          ok: false,
+        })
+        .mockResolvedValueOnce(successfulTranscription('重试后的转录')),
+    };
+    const { dependencies } = createDependencies({ speech });
+    const controller = new VoiceController(dependencies);
+    controller.pressStart();
+    await vi.waitFor(() => expect(controller.getSnapshot().phase).toBe('listening'));
+    controller.release();
+    await vi.waitFor(() => expect(controller.getSnapshot().phase).toBe('error'));
+
+    controller.retryTranscription();
+    await vi.waitFor(() =>
+      expect(controller.getSnapshot()).toMatchObject({
+        phase: 'transcribing',
+        transcript: '重试后的转录',
+        transcriptReview: 'pending',
+      }),
+    );
+    expect(speech.transcribe).toHaveBeenCalledTimes(2);
+    controller.cancel();
+    controller.retryTranscription();
+    expect(speech.transcribe).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not silently fall back to Mock when real configuration cannot be read', async () => {
+    const speech = {
+      cancel: vi.fn(async () => undefined),
+      getConfig: vi.fn(async () => {
+        throw new Error('configuration unavailable');
+      }),
+      transcribe: vi.fn(),
+    };
+    const { dependencies } = createDependencies({ speech });
+    const controller = new VoiceController(dependencies);
+    controller.pressStart();
+    await vi.waitFor(() => expect(controller.getSnapshot().phase).toBe('listening'));
+    controller.release();
+    await vi.waitFor(() => expect(controller.getSnapshot().phase).toBe('error'));
+    expect(controller.getSnapshot().error?.code).toBe('transcription-failed');
+    expect(dependencies.runMockLoop).not.toHaveBeenCalled();
+    expect(speech.transcribe).not.toHaveBeenCalled();
   });
 });

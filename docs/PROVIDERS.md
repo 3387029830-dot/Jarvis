@@ -2,8 +2,9 @@
 
 ## 当前范围
 
-JAR-006A 只实现真实文字 Conversation。真实 STT 属于 JAR-006B，真实 TTS 与 Voice
-Profile Provider binding 属于 JAR-006C。
+JAR-006A 已实现真实文字 Conversation。JAR-006B 已完成真实 STT 代码、本地验收、生产
+Electron 验收和项目所有者第三方真实 STT Provider 手工验收。真实 TTS 与 Voice
+Profile Provider binding 属于尚未开始的 JAR-006C。
 
 当前适配器名为 `OpenAICompatibleConversationProvider`，实现 OpenAI-compatible Chat
 Completions SSE，但核心契约不绑定 OpenAI、OpenRouter 或某个模型。模型 ID 由用户填写，
@@ -60,3 +61,32 @@ corepack pnpm provider:fake
 - Key：任意仅用于本地测试的虚构值
 
 该服务用于验证真实 HTTP、SSE 分片、usage 和取消链路，不代表第三方模型质量。
+
+## Speech-to-Text Provider
+
+当前 STT 适配器为 `OpenAICompatibleSpeechToTextProvider`，向：
+
+```text
+{Base URL}/audio/transcriptions
+```
+
+发送 multipart `file`、`model`、`language` 和可选 `prompt`。支持 `audio/webm`、
+`audio/ogg`、`audio/mp4`、`audio/wav` 与 `audio/mpeg`，限制单次 16 MiB、300 ms 至
+60.5 秒。重定向不会自动跟随，响应上限为 256 KiB。
+
+STT 配置独立于 Conversation，可保存独立加密 Key，也可保存对 Conversation Key 的引用。
+引用不会复制 ciphertext；main 在请求时解析实际凭据。real 模式保存前会用仓库生成的短
+WAV 做连接测试，可能产生少量 Provider 费用。
+
+稳定 STT 错误包括 `audio_too_short`、`audio_too_large`、
+`unsupported_audio_format`、`empty_transcript` 与 `transcription_failed`，并复用
+authentication、permission、model、quota、rate limit、network、timeout、cancelled 和
+malformed response 等 Provider 错误。
+
+本地假 STT 使用同一服务：
+
+- Base URL：`http://localhost:4317/v1`
+- 模型：`jarvis-local-fake-stt`
+- Key：任意仅用于本地测试的虚构值
+
+它验证真实 multipart HTTP、typed binary IPC、取消和遮罩，不代表第三方语音识别质量。

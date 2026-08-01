@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { createServer } from 'node:http';
 import process from 'node:process';
 import { setTimeout } from 'node:timers';
@@ -5,7 +6,10 @@ import { setTimeout } from 'node:timers';
 const port = 4317;
 
 const server = createServer((request, response) => {
-  if (request.method !== 'POST' || request.url !== '/v1/chat/completions') {
+  if (
+    request.method !== 'POST' ||
+    (request.url !== '/v1/chat/completions' && request.url !== '/v1/audio/transcriptions')
+  ) {
     response.writeHead(404).end();
     return;
   }
@@ -14,6 +18,46 @@ const server = createServer((request, response) => {
     response.end(JSON.stringify({ error: { message: 'Missing bearer token.' } }));
     return;
   }
+  if (request.url === '/v1/audio/transcriptions') {
+    const chunks = [];
+    let receivedBytes = 0;
+    request.on('data', (chunk) => {
+      receivedBytes += chunk.length;
+      if (receivedBytes <= 18 * 1024 * 1024) {
+        chunks.push(chunk);
+      }
+    });
+    request.on('end', () => {
+      if (receivedBytes > 18 * 1024 * 1024) {
+        response.writeHead(413).end();
+        return;
+      }
+      const body = Buffer.concat(chunks).toString('utf8');
+      if (!body.includes('name="file"') || !body.includes('name="model"')) {
+        response.writeHead(400, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ error: { message: 'Invalid multipart payload.' } }));
+        return;
+      }
+      if (!body.includes('jarvis-local-fake-stt')) {
+        response.writeHead(404, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ error: { message: 'Unknown local fake STT model.' } }));
+        return;
+      }
+      setTimeout(() => {
+        if (!response.destroyed) {
+          response.writeHead(200, { 'content-type': 'application/json' });
+          response.end(
+            JSON.stringify({
+              text: '这是本地假 Provider 返回的确定性中文语音转录。',
+              usage: { seconds: 0.8 },
+            }),
+          );
+        }
+      }, 220);
+    });
+    return;
+  }
+
   let body = '';
   request.setEncoding('utf8');
   request.on('data', (chunk) => {

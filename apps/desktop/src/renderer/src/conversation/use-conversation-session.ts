@@ -22,6 +22,7 @@ export interface ConversationSessionBinding {
   readonly state: ConversationState;
   readonly providerConfig: ProviderPublicConfig | null;
   readonly submitText: (content: string) => void;
+  readonly submitVoice: (content: string, transcriptionEdited: boolean) => string | null;
   readonly syncVoice: (snapshot: VoiceTimelineSnapshot) => void;
 }
 
@@ -199,8 +200,12 @@ export function useConversationSession(
     [scenario.domains, scenario.title],
   );
 
-  const submitText = useCallback(
-    (rawContent: string): void => {
+  const submit = useCallback(
+    (
+      rawContent: string,
+      source: 'text' | 'voice',
+      transcriptionEdited?: boolean,
+    ): string | null => {
       const content = rawContent.trim();
       if (
         !content ||
@@ -208,7 +213,7 @@ export function useConversationSession(
         abortRef.current !== null ||
         activeRequestRef.current !== null
       ) {
-        return;
+        return null;
       }
       const sessionId = ++sessionRef.current;
       const responseId = `text-${sessionId}-jarvis`;
@@ -218,7 +223,8 @@ export function useConversationSession(
         responseId,
         responseIsMock: providerConfig?.mode !== 'real',
         sessionId,
-        source: 'text',
+        source,
+        ...(transcriptionEdited === undefined ? {} : { transcriptionEdited }),
         type: 'submit',
         userId: `text-${sessionId}-user`,
       });
@@ -227,8 +233,22 @@ export function useConversationSession(
       } else {
         void stream(sessionId);
       }
+      return responseId;
     },
     [providerConfig?.mode, startRealStream, state.activeResponseId, state.turns, stream],
+  );
+
+  const submitText = useCallback(
+    (content: string): void => {
+      submit(content, 'text');
+    },
+    [submit],
+  );
+
+  const submitVoice = useCallback(
+    (content: string, transcriptionEdited: boolean): string | null =>
+      submit(content, 'voice', transcriptionEdited),
+    [submit],
   );
 
   const cancel = useCallback((): void => {
@@ -266,5 +286,5 @@ export function useConversationSession(
     dispatch({ snapshot, type: 'voice-snapshot' });
   }, []);
 
-  return { cancel, providerConfig, retry, state, submitText, syncVoice };
+  return { cancel, providerConfig, retry, state, submitText, submitVoice, syncVoice };
 }

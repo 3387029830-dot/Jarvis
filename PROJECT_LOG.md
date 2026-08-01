@@ -464,3 +464,130 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
 
 完成 PR #4 的 Ready、CI 与 squash 合并。合并后停止；下一项建议为 JAR-006B，但本轮
 不创建其分支，也不实现真实 STT。
+
+## 2026-07-31 — JAR-006B 真实语音识别
+
+### 本次目标
+
+在不引入真实 TTS、持久化或第二套语音状态机的前提下，接通安全、可取消、需要用户确认
+的真实 STT 路径。
+
+### 实现内容
+
+- 新增 vendor-neutral `SpeechToTextProvider` 与 OpenAI-compatible multipart 适配器。
+- 新增 `Uint8Array` 二进制 preload IPC、运行时音频验证、请求隔离、timeout 和取消。
+- 新增独立 STT `safeStorage` 凭据，或显式复用 Conversation 凭据引用。
+- 新增 Editorial Chapters 设置页，支持 STT Mock / real、连接测试、语言、超时、遮罩和
+  删除凭据。
+- 真实转录先进入现有文字区并显示“语音转录待确认”，不会自动发送。
+- 已有文字草稿不会被覆盖；替换和追加都需要明确操作，保留原稿是默认路径。
+- 编辑确认后的消息仍记录为 voice 来源，并记录 `transcriptionEdited`。
+- 失败可重试当前一份内存录音；取消、重新录音、成功或卸载会释放。
+- 本地假 Provider 新增 `/audio/transcriptions`，生产 Electron 完成测试、保存、转录、
+  取消、遮罩和删除闭环。
+
+### 用户现在可以做什么
+
+- 在设置中独立配置真实 STT，或明确复用 Conversation 凭据。
+- 录音后查看并编辑真实转录，再主动发送给 Jarvis。
+- 在已有文字草稿时选择替换、追加或保留原稿。
+- 在失败后重试识别、重新录音或继续使用文字。
+- 任意组合 Mock / real STT 与 Mock / real Conversation。
+
+### 用户目前还不能做什么
+
+- 不能使用真实 TTS 或安装 Voice Profile。
+- 不能永久保存音频、Conversation 或认知数据。
+- 不得开始 JAR-006C。
+
+### 验证结果
+
+- typecheck：通过。
+- test：40 个测试文件、141 项测试全部通过。
+- build：通过。
+- Electron localhost STT acceptance：通过，返回 `JARVIS_SPEECH_ACCEPTANCE_OK`，确认
+  二进制 IPC、multipart、中文转录、取消、Key 末四位和清理。
+- 1440×900、1024×900、200% 缩放和 reduced-motion：生产 Electron 视觉检查通过。
+- format、lint、typecheck、test、build、smoke：最终质量门禁全部通过。
+- GitHub CI：Draft PR #5 首轮 Quality gates 通过（run `30605983259`，1 分 11 秒）；
+  项目所有者验收文档提交 `534ebec` 的 Quality gates 再次通过（run `30684722886`，
+  1 分 08 秒）。
+- 项目所有者第三方真实 STT Provider 验收：通过。覆盖真实麦克风中文、数字和英文缩写、
+  待确认与编辑、voice / transcriptionEdited 元数据、草稿替换/追加/保留、取消无迟到
+  结果、重新识别和文字回退、真实 Conversation 串联、重启配置、Key 脱敏、隐私检查及
+  麦克风和音频资源释放。
+
+### 视觉证据
+
+- 9 张生产 Electron PNG 与复现说明见 `artifacts/jar-006b/README.md`。
+
+### 已知问题
+
+- 不同 OpenAI-compatible STT 服务的 MIME、language、usage 与错误兼容性仍可能不同；
+  当前真实验收结论只覆盖项目所有者实际使用的 Provider。
+- real STT 失败重试期间会在 Renderer 内存短暂保留当前一份录音，不提供永久恢复。
+- Renderer entry 仍较大；本轮不为 bundle 指标扩大重构范围。
+
+### 下一步
+
+完成 PR #5 的 Ready、CI、squash 合并与分支清理。合并后停止；下一项建议为 JAR-006C，
+但本轮不创建其分支，也不实现真实 TTS 或角色声线。
+
+## 2026-08-01 — JAR-006B 最终真实 STT Provider 验收
+
+### 本次目标
+
+记录项目所有者使用私人第三方 STT Provider 的最终验收结论，并完成 PR #5 合并前的
+中文文档、质量门禁与发布收尾。
+
+### 实现内容
+
+- 项目所有者确认 STT 连接测试与真实麦克风中文、数字、英文缩写识别正常。
+- 确认界面显示真实 Provider，转录进入现有文字区等待确认且绝不自动发送。
+- 确认编辑后的语音消息保留 voice 来源并记录 `transcriptionEdited`。
+- 确认已有草稿不会被静默覆盖，替换、追加和保留三种操作均正常。
+- 确认识别取消后没有迟到结果，重新识别、重新录音和文字回退正常。
+- 确认真实 STT 与真实 Conversation Provider 可以串联。
+- 确认重启后配置存在，Key 只显示末四位，日志和仓库没有完整 Key、音频字节或私人录音。
+- 确认识别完成、取消或放弃后，麦克风和内存音频资源得到释放。
+
+### 用户现在可以做什么
+
+- 在应用内安全配置自己的 OpenAI-compatible STT Provider。
+- 使用真实麦克风获得中文转录，编辑确认后再发送给 Jarvis。
+- 在不丢失原草稿的前提下选择替换、追加或保留，并取消或重新识别。
+- 将确认后的真实语音转录交给已配置的真实 Conversation Provider。
+
+### 用户目前还不能做什么
+
+- 不能使用真实 TTS 或安装、预览、绑定 Voice Profile。
+- 不能永久保存音频、Conversation 或认知数据。
+- 不能使用 SQLite、认知星图、演变、档案或 Obsidian 导出。
+
+### 验证结果
+
+- 项目所有者第三方真实 STT Provider 手工验收：通过。
+- format：通过。
+- lint：通过。
+- strict typecheck：通过。
+- test：40 个测试文件、141 项测试全部通过。
+- build：通过；Renderer entry 为 726.64 kB，Settings 保持懒加载分包。
+- smoke：通过；production Electron 返回 `JARVIS_IPC_SMOKE_OK`。
+- GitHub Quality gates：项目所有者验收文档提交 `534ebec` 通过（run `30684722886`，
+  1 分 08 秒）。
+
+### 视觉证据
+
+- 9 张不含私人内容的生产 Electron PNG 与复现说明见 `artifacts/jar-006b/README.md`。
+- 私人 Provider 验收不保存真实 Key、私人录音或私人转录截图到仓库。
+
+### 已知问题
+
+- 不同 OpenAI-compatible STT Provider 对 MIME、language、usage 和错误体的实现可能不同。
+- 真实 TTS、Voice Profile binding、持久化和认知提取仍未实现。
+- Renderer entry bundle 仍较大，后续应继续观察。
+
+### 下一步
+
+完成 PR #5 的 Ready、CI 与 squash 合并，清理本地和远程功能分支后停止。本轮不得创建
+JAR-006C 分支或实现真实 TTS、角色声线。

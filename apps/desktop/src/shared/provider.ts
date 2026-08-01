@@ -19,6 +19,11 @@ export const PROVIDER_ERROR_CODES = [
   'content_rejected',
   'cancelled',
   'malformed_response',
+  'audio_too_short',
+  'audio_too_large',
+  'unsupported_audio_format',
+  'empty_transcript',
+  'transcription_failed',
   'unknown',
 ] as const;
 

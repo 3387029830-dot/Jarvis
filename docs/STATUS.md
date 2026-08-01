@@ -1,10 +1,10 @@
 # Jarvis 当前状态
 
-最后更新：2026-07-31
+最后更新：2026-08-01
 
-当前版本：`0.1.0` / JAR-006A
+当前版本：`0.1.0` / JAR-006B
 
-当前阶段：JAR-006A 已完成；真实 Provider 与 composer 稳定性最终验收通过，JAR-006B 尚未开始
+当前阶段：JAR-006B 已完成；JAR-006C 尚未开始
 
 ## 已真实实现
 
@@ -46,7 +46,27 @@
 - `idle`、`listening`、`transcribing`、`understanding`、`responding_text`、`speaking`、`interrupted`、`cancelled`、`error` 强类型状态机。
 - `sessionId` 隔离旧异步回调，播放期间再次按住可以立即停止并开始新录音。
 - speechSynthesis 本地播放与不依赖系统中文语音包的 Web Audio 确定性短音回退。
-- 录音只短暂保留在 renderer 内存；取消、错误或模拟转录完成后释放，不上传、不写盘、不通过 IPC。
+- Mock STT 录音只短暂保留在 Renderer 内存并在模拟转录后释放；real STT 通过受控二进制
+  IPC 发送当前录音，但两种模式都不写盘。
+- vendor-neutral `SpeechToTextProvider` 契约和一个 OpenAI-compatible multipart
+  `/audio/transcriptions` 适配器。
+- 音频以 `Uint8Array` 通过命名、运行时验证的 preload IPC 进入 main；不使用 Base64、
+  JSON number array、通用 IPC 或 Renderer 网络请求。
+- STT 支持独立加密凭据，或显式复用 Conversation 凭据引用；完整 Key 只在 main 解密，
+  Renderer 只看到可用状态和末四位。
+- 真实 STT 支持连接测试、保存、删除、timeout、取消、请求隔离、格式/时长/大小限制、
+  usage 和分类错误。
+- 真实转录进入现有文字区并明确标记“语音转录待确认”；用户编辑确认前不会调用模型。
+- 文字区已有未发送草稿时不会被覆盖；用户必须明确选择替换或追加，也可以保留原草稿。
+- 确认后的消息仍记录 `source: voice`；编辑过的转录记录 `transcriptionEdited`。
+- 取消、重新录音、识别失败和重试均不会清空录音前已有的文字草稿。
+- 设置页使用 Editorial Chapters；切换章节保留未保存表单状态并给出克制提示。
+- 本地假 Provider 与生产 Electron 已验证 STT 测试、保存、末四位遮罩、二进制 IPC、
+  multipart 转录、取消和凭据删除。
+- 项目所有者已使用自己的第三方 STT Provider 完成最终手工验收：连接测试、真实麦克风
+  中文/数字/英文缩写识别、真实 Provider 标识、待确认与编辑、voice 来源元数据、草稿
+  替换/追加/保留、取消无迟到结果、重新识别和文字回退、真实 Conversation 串联、重启
+  配置恢复、Key 末四位脱敏、日志与仓库隐私检查，以及麦克风和音频资源释放均通过。
 - 键盘导航、清晰焦点、reduced-motion 和低性能静态 Orb 回退。
 - format、lint、strict typecheck、单元/组件测试、build、Electron IPC smoke 和 GitHub CI 配置。
 
@@ -69,8 +89,7 @@
 
 ## 尚未实现
 
-- 真实 STT 和真实 TTS。
-- 对录音内容进行真实识别；当前转录是演示 Mock。
+- 真实 TTS。
 - Conversation、消息或探索的本地持久化。
 - SQLite、本地会话持久化和认知事件。
 - 真实认知提取、用户确认与观点修订历史。
@@ -88,10 +107,13 @@
 - `#/conversation?exploration=uncertainty-and-crowd`：心理学 × 经济学 × 群体行为。
 - `#/conversation?exploration=money-consensus-institution`：货币 × 共识 × 制度。
 - `#/conversation?exploration=knowledge-action-gap`：知识 × 行动 × 自我叙事。
-- `#/settings`：配置、测试、启用或删除 OpenAI-compatible Conversation Provider。
+- `#/settings`：分章节配置 Conversation 和 Speech-to-Text Provider。
 - `#/design-system`：仅开发验证使用的设计系统展示页，不出现在产品导航中。
 
-在 Presence 或 Conversation 中可体验真实录音与本地 Mock 闭环。默认点击开始、再次点击结束，也可切换到按住模式；模式会在两个页面共享。`state`、`voice` 等查询参数只用于生产 Electron 的视觉证据，不是产品设置。
+在 Presence 或 Conversation 中可体验真实录音与本地 Mock 闭环；配置 real STT 后，
+录音会进入真实识别和人工确认路径。默认点击开始、再次点击结束，也可切换到按住模式；
+模式会在两个页面共享。`state`、`voice` 等查询参数只用于生产 Electron 的视觉证据，
+不是产品设置。
 
 ## 已知问题
 
@@ -110,8 +132,12 @@
   私人 Provider 回答。
 - 浏览器 hash 路由足以覆盖当前两个产品页，但路由继续增加时应重新评估。
 - Voice Profile 当前只有文档契约；仓库不内置未经授权的具体人物或演员声音。
+- 不同 OpenAI-compatible STT 服务对 MIME、语言、usage 和错误状态的实现仍可能不同；
+  当前结论只覆盖本地假 Provider 和项目所有者实际使用的第三方 Provider。
+- real STT 失败重试会在 Renderer 内存中短暂保留当前一份录音；应用退出、取消、成功、
+  重新录音或放弃后释放，不提供永久音频恢复。
 
 ## 下一步
 
-JAR-006A 收尾合并后，下一项建议为 JAR-006B：真实 STT。当前尚未创建 JAR-006B 分支，
-也未开始实现真实 STT 或 JAR-006C。
+JAR-006B 合并后，下一项建议为 JAR-006C：真实 TTS 与 Voice Profile binding；当前尚未
+创建分支，也未开始实现。

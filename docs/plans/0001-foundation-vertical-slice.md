@@ -350,6 +350,33 @@ For JAR-005 specifically:
   Manual upward scrolling disables token following until the fixed “back to latest” action is
   used; reduced motion changes that explicit return to instant scrolling.
 
+## JAR-006B implementation details
+
+- JAR-006B adds only real speech-to-text. Real TTS, Voice Profile installation, persistence,
+  cognition extraction, VAD, wake word, continuous listening and full duplex remain excluded.
+- A vendor-neutral `SpeechToTextProvider` contract and one OpenAI-compatible multipart adapter live
+  behind a main-process service. Renderer audio crosses only a named, runtime-validated, binary IPC
+  boundary and never gains credentials, arbitrary fetch or generic IPC.
+- Speech configuration is independent from Conversation configuration. The user may either save a
+  separate encrypted STT credential or store an explicit reference to the Conversation credential;
+  the referenced secret is resolved only in main and is never decrypted into Renderer.
+- Raw audio remains memory-only. One current recording may be retained briefly for retry, then is
+  released after success, failure resolution, cancellation, re-recording or unmount. It is never
+  written to disk, logs, screenshots, fixtures or persistent configuration.
+- The existing canonical `VoiceController` remains the only voice state machine. Real mode replaces
+  only the Mock transcribing delay; `understanding` begins only after the user reviews and confirms
+  the transcript.
+- The approved UI direction is Superdesign Settings “Editorial Chapters” plus Conversation
+  “result in existing text area”. A transcript first enters a separate pending buffer and is
+  labelled “语音转录待确认”; it never automatically calls Conversation.
+- A pending transcript cannot silently replace an unsent text draft. When a draft already exists,
+  the user must explicitly choose replace or append; keeping the original draft is the default.
+  Re-record, cancel and STT failure preserve that draft.
+- Confirmed voice text enters the existing Conversation submission path with `source: voice` and
+  `transcriptionEdited` metadata. Unconfirmed transcript never appears in the timeline.
+- Settings chapter navigation keeps per-chapter draft state. Leaving a dirty chapter gives a
+  restrained confirmation instead of discarding edits.
+
 ## Progress log
 
 - 2026-07-29: Read `AGENTS.md`, `README.md`, `PLANS.md`, every product document listed by README, the three accepted ADRs, the GitHub workflow, JAR task list, and this ExecPlan before modifying repository files.
@@ -521,3 +548,72 @@ For JAR-005 specifically:
 - 2026-07-31: JAR-006A is accepted as complete. The final remaining steps are documentation,
   repeated local/CI quality gates, Ready transition, squash merge, and branch cleanup. JAR-006B/C
   remain explicitly out of scope.
+- 2026-07-31: Began JAR-006B on `feat/jar-006b-real-stt` after reading the repository instructions,
+  product, experience, architecture, frontend, copy, voice, Provider, security, status, task,
+  current-plan and JAR-004 through JAR-006A evidence documents. Confirmed that JAR-006C and all
+  persistence/cognition work remain excluded.
+- 2026-07-31: Generated faithful current Settings and Conversation baselines in Superdesign, then
+  two Settings and two transcript-review variations. The project owner approved Editorial Chapters
+  plus staging the transcript in the existing text area, with an additional non-destructive draft
+  conflict requirement.
+- 2026-07-31: Added shared speech contracts, main-process runtime validation, encrypted/versioned
+  STT configuration, explicit Conversation-credential references, request-isolated IPC and one
+  OpenAI-compatible multipart `/audio/transcriptions` adapter.
+- 2026-07-31: Kept the existing `VoiceController` as the single state source. Real transcription
+  remains in `transcribing` with pending review, preserves one failed recording for retry, and
+  rejects stale or cancelled results without silently falling back to Mock.
+- 2026-07-31: Implemented the approved B+A UI: mounted Editorial Chapters in Settings and real
+  transcripts staged inside the existing Conversation text area. Existing drafts require explicit
+  replace or append, while cancel, re-record and failure restore/preserve the original draft.
+- 2026-07-31: Confirmed voice submissions retain `source=voice` and `transcriptionEdited`. Raw audio
+  and unconfirmed transcripts never enter Conversation or persistence.
+- 2026-07-31: Extended the localhost fake Provider and production Electron acceptance. The full
+  preload/main/network path returned `JARVIS_SPEECH_ACCEPTANCE_OK` after connection test, encrypted
+  save, suffix-only public config, typed binary IPC, multipart transcription, cancellation and
+  credential deletion.
+- 2026-07-31: Expanded automated coverage to 141 tests across 40 files, including multipart fields,
+  HTTP/error/timeout/cancel mapping, binary IPC validation, sender isolation, config encryption and
+  reference behavior, VoiceController real review/retry/stale-result behavior, draft conflict
+  resolution and dirty Settings chapters.
+- 2026-07-31: Initial visual capture exposed a lazy Settings placeholder and an overly narrow
+  desktop voice-status column. Evidence timing now waits for the lazy route, and voice internals use
+  fixed rows while the composer preserves the three JAR-006A top-level grid areas.
+- 2026-07-31: Captured nine production Electron images at 1440×900, 1024×900, 200% zoom and
+  reduced-motion under `artifacts/jar-006b/`. These use deterministic evidence data; third-party
+  real STT acceptance remains a separate project-owner gate.
+- 2026-07-31: Final local format check, lint, strict typecheck, 141 tests, production build and
+  Electron IPC smoke passed. A final production Electron localhost STT run again returned
+  `JARVIS_SPEECH_ACCEPTANCE_OK`, and all evidence images were regenerated from that exact source.
+- 2026-07-31: Published implementation commit `629a61c` to Draft PR #5. GitHub Actions Quality
+  gates run `30605983259` passed in 1 minute 11 seconds. The PR remains Draft until project-owner
+  third-party real STT acceptance; no JAR-006C branch or implementation was created.
+- 2026-08-01: The project owner completed third-party real STT acceptance with a private Provider.
+  Connection, Chinese/digit/English-abbreviation transcription, explicit review/editing, voice
+  metadata, non-destructive draft handling, cancellation without late results, re-record/retry,
+  real Conversation chaining, restart persistence, suffix-only Key display, privacy inspection and
+  microphone/audio cleanup all passed. No private credential, recording or transcript was added to
+  the repository.
+- 2026-08-01: JAR-006B is accepted as complete. The remaining release steps are updated Chinese
+  documentation and PR body, repeated local/CI quality gates, Ready transition, squash merge and
+  local/remote branch cleanup. JAR-006C remains explicitly excluded.
+- 2026-08-01: Final local closeout gates passed: formatting, lint, strict typecheck, 141 tests across
+  40 files, production build and Electron IPC smoke (`JARVIS_IPC_SMOKE_OK`). The renderer entry
+  remains 726.64 kB; no bundle refactor was added to this closeout.
+- 2026-08-01: Pushed project-owner acceptance documentation as `534ebec`; GitHub Actions Quality
+  gates run `30684722886` passed in 1 minute 8 seconds. A final documentation-only record commit
+  will be required to make the repository log self-contained before Ready and squash merge.
+
+## JAR-006B deviations and final acceptance
+
+- The approved design used Editorial Chapters rather than one long Settings form. Both chapter
+  components remain mounted so unsaved state survives navigation; a dirty chapter prompts without
+  discarding values.
+- Transcript staging uses the existing textarea rather than a second voice editor. A separate
+  conflict buffer is still required when text already exists so the recording cannot overwrite it.
+- No dependency or vendor SDK was added. Native fetch, FormData, Blob and typed IPC satisfy the
+  adapter requirement with a smaller security surface.
+- The repository has no real third-party STT credential and intentionally stores no private audio
+  or transcript evidence. The project owner completed the private Provider gate outside the
+  repository on 2026-08-01; local deterministic evidence remains reproducible without secrets.
+- JAR-006B is complete after the project-owner gate. JAR-006C is explicitly excluded from this
+  closeout and has not been started.

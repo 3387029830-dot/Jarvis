@@ -199,3 +199,18 @@ Foundation target:
 - primary design width 1280–1920 px;
 - usable minimum width 1024 px;
 - no mobile layout in the foundation milestone.
+
+## 13. JAR-006B transcript review and Settings chapters
+
+- Settings uses two editorial chapters, Conversation and Speech-to-Text, rather than one long
+  integration form. Hidden chapter content remains mounted so unsaved values survive navigation.
+- Leaving a dirty chapter opens a restrained accessible Dialog. Continuing changes the visible
+  chapter but does not discard either form.
+- A real transcript is staged in the existing Conversation textarea with a visible
+  “语音转录待确认” state. It is never a second chat bubble or an auto-sent message.
+- If the textarea already contains a draft, keep it visible and unchanged while presenting the
+  transcript as a conflict preview. Replace, append and keep-original are explicit controls.
+- Composer direct children remain identity, text and voice with named grid areas. Transcript status
+  and generation actions stay inside text; voice status stays inside the fixed voice container.
+- At 1024 px the identity area moves above text/voice; below the effective 860 px layout created by
+  200% zoom, the three areas stack vertically and remain keyboard operable.

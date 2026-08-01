@@ -18,4 +18,18 @@ describe('voice evidence state', () => {
       permission: 'denied',
     });
   });
+
+  it('builds deterministic real STT review and error states', () => {
+    expect(parseVoiceEvidenceState('real-review')).toBe('real-review');
+    expect(createVoiceEvidenceState('real-review')).toMatchObject({
+      phase: 'transcribing',
+      speechMode: 'real',
+      transcriptReview: 'pending',
+    });
+    expect(createVoiceEvidenceState('real-error')).toMatchObject({
+      error: { code: 'transcription-failed' },
+      phase: 'error',
+      speechMode: 'real',
+    });
+  });
 });

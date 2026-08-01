@@ -13,6 +13,11 @@ const publicMessages: Record<ProviderErrorCode, string> = {
   content_rejected: 'Provider 拒绝了这次内容请求。',
   cancelled: '本轮回答已取消。',
   malformed_response: 'Provider 返回了无法安全解析的流式数据。',
+  audio_too_short: '这段录音太短，请重新录制。',
+  audio_too_large: '这段录音超出本轮允许的大小。',
+  unsupported_audio_format: '当前录音格式不受语音识别服务支持。',
+  empty_transcript: 'Provider 没有识别出可确认的文字。',
+  transcription_failed: '这次语音识别没有完成，请重试或重新录音。',
   unknown: 'Provider 请求未能完成。',
 };
 
@@ -38,6 +43,7 @@ export class ProviderFailure extends Error {
       'provider_unavailable',
       'rate_limit',
       'timeout',
+      'transcription_failed',
       'unknown',
     ].includes(code);
     this.safeTechnicalSummary = options.safeTechnicalSummary ?? code;

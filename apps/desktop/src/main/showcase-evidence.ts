@@ -8,10 +8,21 @@ export type ConversationEvidenceState =
   | 'real-complete'
   | 'real-streaming'
   | 'streaming';
-export type SettingsEvidenceState = 'configured' | 'empty' | 'error' | 'success';
+export type SettingsEvidenceState =
+  'configured' | 'empty' | 'error' | 'success' | 'stt-empty' | 'stt-configured' | 'stt-error';
 export type PresenceEvidenceVariant = 'empty' | 'single' | 'populated';
 export type VoiceEvidenceState =
-  'live' | 'idle' | 'listening' | 'transcribing' | 'responding' | 'speaking' | 'permission-denied';
+  | 'live'
+  | 'idle'
+  | 'listening'
+  | 'transcribing'
+  | 'responding'
+  | 'speaking'
+  | 'permission-denied'
+  | 'real-transcribing'
+  | 'real-review'
+  | 'real-edited'
+  | 'real-error';
 
 export interface ShowcaseEvidenceOptions {
   dialogOpen: boolean;
@@ -62,7 +73,14 @@ function parseConversationState(value: string | undefined): ConversationEvidence
 }
 
 function parseSettingsState(value: string | undefined): SettingsEvidenceState {
-  return value === 'configured' || value === 'error' || value === 'success' ? value : 'empty';
+  return value === 'configured' ||
+    value === 'error' ||
+    value === 'success' ||
+    value === 'stt-empty' ||
+    value === 'stt-configured' ||
+    value === 'stt-error'
+    ? value
+    : 'empty';
 }
 
 function parsePresenceVariant(value: string | undefined): PresenceEvidenceVariant {
@@ -75,7 +93,11 @@ function parseVoiceState(value: string | undefined): VoiceEvidenceState {
     value === 'transcribing' ||
     value === 'responding' ||
     value === 'speaking' ||
-    value === 'permission-denied'
+    value === 'permission-denied' ||
+    value === 'real-transcribing' ||
+    value === 'real-review' ||
+    value === 'real-edited' ||
+    value === 'real-error'
     ? value
     : 'live';
 }

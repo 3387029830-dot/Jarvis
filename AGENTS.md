@@ -59,6 +59,11 @@ Do not add unless a task explicitly requires it:
 - Real Provider failure must remain explicit and must never silently substitute Mock content.
 - Provider logs, errors, tests, screenshots, and fixtures must not contain full API keys or complete
   private conversations.
+- Real STT transcripts must require explicit confirmation before Conversation submission.
+- Never overwrite an unsent text draft with a transcript; replace and append require explicit user
+  actions, and cancel/re-record/failure must preserve the original draft.
+- Raw STT audio is memory-only. Use named typed binary IPC, enforce size/duration/MIME limits in
+  main, and retain at most one current recording briefly for retry.
 - All model, STT, TTS, filesystem, SQLite, and Obsidian operations run through main-process services.
 - Persist cognition changes as append-only events; do not silently overwrite belief history.
 - Every durable cognition item must retain source message IDs and timestamps.

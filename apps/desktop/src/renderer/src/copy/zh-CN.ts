@@ -72,6 +72,9 @@ export const zhCN = {
     holdMode: '按住说话',
     holdModeDescription: '按住开始，松开发送。',
     mockBadge: '演示 Mock',
+    realBadge: '真实语音识别',
+    realDisclosure:
+      '真实识别模式：录音只在本次识别期间发送给你配置的第三方 Provider；确认前不会发送给 Conversation。',
     modeLabel: '语音输入方式',
     noRoundYet: '点击后才会请求麦克风权限；应用启动时不会主动访问麦克风。',
     privacyDetails: [
@@ -83,6 +86,8 @@ export const zhCN = {
     privacySummary: '本地音频与隐私边界',
     responseLabel: '模拟回答',
     retryAction: '重新尝试',
+    retryTranscriptionAction: '重试识别',
+    rerecordAction: '重新录音',
     roundTitle: '当前语音回合',
     state: {
       cancelled: {
@@ -136,6 +141,9 @@ export const zhCN = {
       },
     },
     transcriptLabel: '模拟转录',
+    transcriptReviewAction: '确认这段转录',
+    transcriptReviewHint: '你可以先修改文字；确认前不会进入对话，也不会自动发送。',
+    transcriptReviewLabel: '语音转录待确认',
     toggleMode: '点击说话',
     toggleModeDescription: '点击开始，再次点击发送。',
     toggleListeningAction: '再次点击发送',
