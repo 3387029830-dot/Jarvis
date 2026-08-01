@@ -84,6 +84,7 @@ function Harness({
     release: () => controller.release(),
     restartCapture: () => controller.restartCapture(),
     retryTranscription: () => controller.retryTranscription(),
+    settleExternalResponse: () => controller.settleExternalResponse(),
     state,
   };
   return (

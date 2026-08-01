@@ -4,6 +4,56 @@
 
 ---
 
+## 2026-08-01 — JAR-006C 真实语音合成与声线系统（Draft）
+
+### 本次目标
+
+建立 vendor-neutral TTS、MiniMax 中文语音适配、授权 Voice Profile 绑定和可打断的内存播放闭环。
+
+### 实现内容
+
+- 新增 `TextToSpeechProvider` 契约和 `MiniMaxTextToSpeechProvider`，main 调用 `/t2a_v2` 并解码 hex。
+- 新增 `tts-config.v1.json`、`safeStorage` 凭据、末四位遮罩和手动/自动/关闭播放模式。
+- 新增 Markdown/链接/代码清理、中文语义分段、最多两段预取、顺序无重叠播放和 session 隔离。
+- 新增停止、Escape、新录音、新文字与卸载清理；错误保留完整文字回答。
+- 新增四个未绑定原创模板、三类 Voice Profile、授权有效性校验、手动 binding、试听和显式选择。
+- 设置页扩展为四个 Editorial Chapters，并保留跨章节未保存状态。
+- 依据 Superdesign A+B，将 Provider 配置保持紧凑，并以编辑性声线档案呈现表达身份。
+
+### 用户现在可以做什么
+
+- 安装具有完整授权元数据的 MiniMax voice ID 绑定并显式选择。
+- 选择手动、自动或关闭朗读；在完成回答上朗读、停止或用 Escape / 新录音打断。
+- TTS 失败时继续阅读完整文字，并重新尝试朗读。
+
+### 本轮尚不能做什么
+
+- 尚未由项目所有者使用真实 MiniMax 账户完成最终验收，因此不能宣称 JAR-006C 完成。
+- 不支持 `/get_voice` 自动发现、跨重启音频、SQLite、对话持久化或认知提取。
+- 仓库不内置角色、演员或克隆声音及真实音频。
+
+### 验证结果
+
+- format、lint、strict typecheck、165 项测试、build 与 Electron IPC smoke 全部通过。
+- 生产 Electron IPC smoke 与 11 张 1440/1024/reduced-motion 视觉证据已生成。
+- 本地假 Provider 实现 `/v1/t2a_v2`；生产 Electron 验收确认二进制 IPC、Key 末四位、
+  合成、取消无迟到结果，返回 `audioBytes=10`。真实 MiniMax 验收待项目所有者执行。
+
+### 视觉证据
+
+- `artifacts/jar-006c/`：配置、声线档案、试听/绑定、preparing/playing/stopped/error、1024 与 reduced-motion 共 11 张截图。
+
+### 已知问题
+
+- MiniMax 账户区域、voice ID 可用性、费用、首段真实延迟与中文自然度尚未实测。
+- Renderer 入口约 802 kB；Settings 为避免 Electron 懒加载偶发停留暂时并回主包。
+
+### 下一步
+
+项目所有者完成真实 MiniMax TTS 最终验收后收尾 JAR-006C Draft PR；此前不开始 JAR-007。
+
+---
+
 ## 2026-07-29 — 产品方向确立
 
 ### 本次目标

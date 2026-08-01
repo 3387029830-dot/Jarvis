@@ -294,6 +294,13 @@ export class VoiceController {
       });
   }
 
+  settleExternalResponse(): void {
+    if (this.state.phase !== 'responding_text') {
+      return;
+    }
+    this.dispatch({ sessionId: this.state.sessionId, type: 'external-response-completed' });
+  }
+
   failExternalResponse(message: string): void {
     if (!['understanding', 'responding_text'].includes(this.state.phase)) {
       return;

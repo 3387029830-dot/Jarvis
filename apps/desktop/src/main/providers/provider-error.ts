@@ -52,11 +52,14 @@ export class ProviderFailure extends Error {
     }
   }
 
-  toPublicError(requestId = 'provider-configuration'): ProviderError {
+  toPublicError(
+    requestId = 'provider-configuration',
+    providerId: ProviderError['providerId'] = 'openai-compatible',
+  ): ProviderError {
     return {
       code: this.code,
       message: this.message,
-      providerId: 'openai-compatible',
+      providerId,
       requestId,
       retryable: this.retryable,
       safeTechnicalSummary: this.safeTechnicalSummary,
@@ -65,9 +68,13 @@ export class ProviderFailure extends Error {
   }
 }
 
-export function toProviderError(error: unknown, requestId?: string): ProviderError {
+export function toProviderError(
+  error: unknown,
+  requestId?: string,
+  providerId: ProviderError['providerId'] = 'openai-compatible',
+): ProviderError {
   if (error instanceof ProviderFailure) {
-    return error.toPublicError(requestId);
+    return error.toPublicError(requestId, providerId);
   }
-  return new ProviderFailure('unknown', { cause: error }).toPublicError(requestId);
+  return new ProviderFailure('unknown', { cause: error }).toPublicError(requestId, providerId);
 }

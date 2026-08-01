@@ -126,7 +126,10 @@ issue and does not authorize work on JAR-006B or JAR-006C.
 - Introduce the vendor-neutral TTS contract and one real Chinese TTS adapter.
 - Bind Original, Licensed Character and Consented Clone profiles through Provider binding and
   authorization metadata.
-- Preserve readable text and interruption when synthesis is unavailable.
+  - Preserve readable text and interruption when synthesis is unavailable.
+  - Status: implementation, localhost/provider-stub tests, production Electron verification and
+    visual evidence complete on 2026-08-01. Project-owner real MiniMax acceptance is still required;
+    keep the PR Draft and do not start JAR-007.
 
 ### Acceptance criteria
 

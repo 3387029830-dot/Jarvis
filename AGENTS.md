@@ -64,6 +64,11 @@ Do not add unless a task explicitly requires it:
   actions, and cancel/re-record/failure must preserve the original draft.
 - Raw STT audio is memory-only. Use named typed binary IPC, enforce size/duration/MIME limits in
   main, and retain at most one current recording briefly for retry.
+- TTS audio is memory-only. Decode Provider transport formats in main; Renderer may receive only
+  typed audio bytes, must revoke Blob URLs, and must stop/cancel on new recording, new text,
+  Escape, replacement playback or unmount.
+- Voice Profile installation requires authorization metadata. Missing or expired rights make a
+  profile unavailable; never ship an unauthorized person, actor or character voice ID/audio.
 - All model, STT, TTS, filesystem, SQLite, and Obsidian operations run through main-process services.
 - Persist cognition changes as append-only events; do not silently overwrite belief history.
 - Every durable cognition item must retain source message IDs and timestamps.

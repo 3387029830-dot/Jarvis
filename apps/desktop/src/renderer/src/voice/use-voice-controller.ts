@@ -15,6 +15,7 @@ export interface VoiceControllerBinding {
   readonly release: () => void;
   readonly restartCapture: () => void;
   readonly retryTranscription: () => void;
+  readonly settleExternalResponse: () => void;
   readonly state: VoiceControllerState;
 }
 
@@ -38,6 +39,7 @@ export function useVoiceController(
     release: () => controller.release(),
     restartCapture: () => controller.restartCapture(),
     retryTranscription: () => controller.retryTranscription(),
+    settleExternalResponse: () => controller.settleExternalResponse(),
     state,
   };
 }

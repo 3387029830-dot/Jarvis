@@ -32,6 +32,25 @@ import {
   type SpeechTranscriptionRequest,
   type SpeechTranscriptionResult,
 } from '../shared/speech';
+import {
+  TTS_CANCEL_CHANNEL,
+  TTS_DELETE_CREDENTIAL_CHANNEL,
+  TTS_DELETE_PROFILE_CHANNEL,
+  TTS_GET_CONFIG_CHANNEL,
+  TTS_INSTALL_PROFILE_CHANNEL,
+  TTS_SAVE_CONFIG_CHANNEL,
+  TTS_SELECT_PROFILE_CHANNEL,
+  TTS_SYNTHESIZE_CHANNEL,
+  TTS_TEST_CONFIG_CHANNEL,
+  type TtsDraftConfig,
+  type TtsOperationResult,
+  type TtsPublicConfig,
+  type TtsSaveInput,
+  type TtsSynthesisRequest,
+  type TtsSynthesisResult,
+  type TtsTestResult,
+  type VoiceProfile,
+} from '../shared/tts';
 
 const jarvisApi: JarvisApi = Object.freeze({
   conversation: Object.freeze({
@@ -67,6 +86,24 @@ const jarvisApi: JarvisApi = Object.freeze({
       ipcRenderer.invoke(SPEECH_TEST_CONFIG_CHANNEL, input) as Promise<SpeechTestResult>,
     transcribe: (request: SpeechTranscriptionRequest) =>
       ipcRenderer.invoke(SPEECH_TRANSCRIBE_CHANNEL, request) as Promise<SpeechTranscriptionResult>,
+  }),
+  tts: Object.freeze({
+    cancel: (requestId: string) => ipcRenderer.invoke(TTS_CANCEL_CHANNEL, requestId),
+    deleteCredential: () =>
+      ipcRenderer.invoke(TTS_DELETE_CREDENTIAL_CHANNEL) as Promise<TtsOperationResult>,
+    deleteProfile: (profileId: string) =>
+      ipcRenderer.invoke(TTS_DELETE_PROFILE_CHANNEL, profileId) as Promise<TtsOperationResult>,
+    getConfig: () => ipcRenderer.invoke(TTS_GET_CONFIG_CHANNEL) as Promise<TtsPublicConfig>,
+    installProfile: (profile: VoiceProfile) =>
+      ipcRenderer.invoke(TTS_INSTALL_PROFILE_CHANNEL, profile) as Promise<TtsOperationResult>,
+    saveConfig: (input: TtsSaveInput) =>
+      ipcRenderer.invoke(TTS_SAVE_CONFIG_CHANNEL, input) as Promise<TtsOperationResult>,
+    selectProfile: (profileId: string) =>
+      ipcRenderer.invoke(TTS_SELECT_PROFILE_CHANNEL, profileId) as Promise<TtsOperationResult>,
+    synthesize: (request: TtsSynthesisRequest) =>
+      ipcRenderer.invoke(TTS_SYNTHESIZE_CHANNEL, request) as Promise<TtsSynthesisResult>,
+    testConfig: (input: TtsDraftConfig) =>
+      ipcRenderer.invoke(TTS_TEST_CONFIG_CHANNEL, input) as Promise<TtsTestResult>,
   }),
 });
 

@@ -235,6 +235,25 @@
   font-size: var(--font-size-xs);
 }
 
+.conversation-turn__speech {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.conversation-tts-fallback {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border-left: var(--border-width-emphasis) solid var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+  color: var(--color-text-secondary);
+}
+
 .conversation-turn__status span {
   width: 0.4rem;
   height: 0.4rem;

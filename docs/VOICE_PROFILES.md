@@ -1,6 +1,6 @@
 # Jarvis Voice Profile 契约
 
-最后更新：2026-07-30
+最后更新：2026-08-01
 
 ## 目的
 
@@ -84,7 +84,19 @@ interface VoiceProviderBinding {
 - Provider 返回的营销名称不能代替授权证明。
 - Profile 包不得携带 API Key、私有录音、未经许可的训练样本或真实用户对话。
 
-## JAR-005 当前状态
+## JAR-006C 实现状态
+
+- 运行时实现使用 `VoiceProfile`、`VoiceAuthorization` 与产品独立 `providerVoiceId`。
+- 内置“静默管家、温和导师、理性同伴、夜间低语”仅是 Original Profile 表达模板，
+  默认均未绑定、不可试听，不携带真实 voice ID 或音频。
+- 手动安装必须填写类别、权利人、授权引用、允许用途和可选到期日；缺失或过期即不可用。
+- `理性同伴`只是默认视觉模板，不等于已选择或已授权的 Provider 声线。
+- 试听与正式朗读调用同一个 main-process TTS API，试听不会改变当前选择。
+- 当前只实现 MiniMax Provider binding；Provider `/get_voice` 发现仍是可选后续能力，
+  手动绑定始终保留。
+- 项目所有者真实 MiniMax 验收尚未完成，不能把内置模板描述成可用真实声线。
+
+## JAR-005 历史状态
 
 Conversation 仅展示“默认演示声线”的未来绑定摘要。它使用 JAR-004 的本地 `speechSynthesis` / 确定性短音回退，不是 Voice Profile 安装，也不代表任何角色授权。
 

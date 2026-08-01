@@ -64,6 +64,17 @@ beforeEach(() => {
         testConfig: vi.fn(),
         transcribe: vi.fn(),
       },
+      tts: {
+        cancel: vi.fn(),
+        deleteCredential: vi.fn(),
+        deleteProfile: vi.fn(),
+        getConfig: vi.fn(),
+        installProfile: vi.fn(),
+        saveConfig: vi.fn(),
+        selectProfile: vi.fn(),
+        synthesize: vi.fn(),
+        testConfig: vi.fn(),
+      },
     } satisfies JarvisApi,
   });
 });

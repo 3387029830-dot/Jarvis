@@ -154,6 +154,17 @@ JAR-006 接入真实 STT、模型与 TTS 时，凭据和网络调用必须进入
 
 Voice Profile 的类别、授权来源和 Provider binding 见 `docs/VOICE_PROFILES.md`。
 
+## 12. JAR-006C 真实语音合成
+
+- TTS 是 Conversation 完成后的独立播放维度，不把文字 Provider 状态伪装成 speaking。
+- 可见状态由 recording/STT、Conversation、TTS 三个维度按优先级派生；只有真实音频开始
+  播放才显示 speaking，preparing 仍保留明确文字说明。
+- 回答先规范化并按中文语义边界确定性分段；第一段可用即播放，最多并行预取两段，
+  严格按原顺序且不重叠。
+- 手动播放为默认；自动与关闭可持久化。每个完成回答都有固定朗读/停止入口。
+- 新录音、新文字、Escape、停止、错误和卸载会取消未完成请求、暂停当前音频并撤销 Blob URL。
+- 任一分段失败即停止后续队列；完整文字不受影响，可重新朗读。
+
 ## JAR-006A 边界（历史）
 
 JAR-006A 只替换文字 Conversation Provider，不改变语音状态机：

@@ -13,6 +13,7 @@ export interface ConversationOptions {
   readonly focusComposer: boolean;
   readonly reducedMotion: boolean;
   readonly voiceEvidence: VoiceEvidenceState | null;
+  readonly ttsEvidence: 'preparing' | 'playing' | 'stopped' | 'error' | null;
 }
 
 export function parseConversationOptions(hash: string): ConversationOptions {
@@ -33,6 +34,13 @@ export function parseConversationOptions(hash: string): ConversationOptions {
     focusComposer: params.get('focus') === 'composer',
     reducedMotion: params.get('motion') === 'reduced',
     voiceEvidence: parseVoiceEvidenceState(params.get('voice')),
+    ttsEvidence:
+      params.get('tts') === 'preparing' ||
+      params.get('tts') === 'playing' ||
+      params.get('tts') === 'stopped' ||
+      params.get('tts') === 'error'
+        ? (params.get('tts') as 'preparing' | 'playing' | 'stopped' | 'error')
+        : null,
   };
 }
 import { parseVoiceEvidenceState, type VoiceEvidenceState } from '../voice/voice-evidence';

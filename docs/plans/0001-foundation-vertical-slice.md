@@ -377,7 +377,77 @@ For JAR-005 specifically:
 - Settings chapter navigation keeps per-chapter draft state. Leaving a dirty chapter gives a
   restrained confirmation instead of discarding edits.
 
+## JAR-006C implementation details
+
+- JAR-006C completes only real text-to-speech and Voice Profile binding. SQLite, Conversation
+  persistence, cognition extraction, Constellation, Evolution, Obsidian, VAD, wake word, full
+  duplex realtime and in-app voice cloning remain excluded.
+- A vendor-neutral `TextToSpeechProvider` contract lives in shared/main code. The first adapter is
+  `MiniMaxTextToSpeechProvider`, using synchronous HTTP `/t2a_v2`, Bearer authentication, manual
+  redirects, timeout/cancellation, bounded JSON and decoded-audio sizes, business-status mapping,
+  trace ID and usage characters. MiniMax hex is decoded to `Uint8Array` only in main.
+- `tts-config.v1.json` under Electron userData stores public TTS settings, playback mode and
+  `safeStorage` ciphertext. Renderer receives only public configuration and a masked suffix; it
+  cannot issue arbitrary URLs, headers or Provider payloads.
+- Speakable text is derived without changing the visible answer. Markdown syntax and URLs are
+  normalized, code blocks are summarized, and deterministic Chinese-aware segmentation merges
+  short fragments and splits long fragments without breaking numbers or common Latin
+  abbreviations.
+- A renderer-private playback controller owns one `ttsSessionId`, at most two prefetched segments,
+  the current in-memory audio object URL and cleanup. React state contains status/metrics only,
+  never audio bytes, hex or base64. Stop, new recording, new text submission, Escape, error and
+  unmount abort main requests, stop audio, clear the queue and revoke every object URL.
+- Recording/STT, Conversation generation and TTS remain separate dimensions. Orb and visible copy
+  are derived with listening/transcribing above TTS speaking and text generation. The same TTS
+  snapshot drives the playback controls and speaking Orb; no second independent Jarvis phase is
+  presented.
+- Playback mode is `off | manual | automatic`, defaults to manual and persists in the versioned
+  TTS configuration without SQLite. Existing answers never auto-play merely because the app opens.
+  A failed segment stops the automatic queue but preserves the complete readable answer and
+  exposes retry/disable actions without silent local-voice fallback.
+- Voice Profile product IDs remain independent from Provider voice IDs. Four unbound built-in
+  Original templates are available; custom Original, Licensed Character and Consented Clone
+  profiles persist locally with authorization metadata and one or more Provider bindings.
+  Licensed/cloned profiles missing required declarations or past expiry cannot be installed,
+  previewed or selected. No specific actor, public figure or fictional-character asset ships.
+- Settings extends the existing mounted Editorial Chapters with Text-to-Speech and Voice Profiles.
+  Dirty state survives chapter switching; preview uses the same real Provider path, does not change
+  the selected profile, may incur Provider cost and never persists generated audio.
+- CI uses deterministic unit/component tests and a localhost fake MiniMax endpoint. Production
+  Electron acceptance covers typed IPC, encrypted configuration, masked suffix, hex decoding,
+  preview/play/stop/session isolation and cleanup without real credentials. The PR remains Draft
+  until the project owner completes private real MiniMax acceptance.
+
 ## Progress log
+
+- 2026-08-01：完成 JAR-006C main/preload/renderer 实现：MiniMax TTS、加密配置、授权
+  profile、文本规范化与分段、两段预取队列、内存播放清理、三种播放模式和文字回退。
+- 2026-08-01：按批准的 Superdesign A+B 落地四章 Editorial Settings 与声线档案；修正
+  生成稿中的错误 Provider 地址、模型名和虚构授权声线，仓库模板保持未绑定。
+- 2026-08-01：新增 Provider/文本/配置/队列回归测试，strict typecheck 与 165 项测试通过。
+- 2026-08-01：生产 Electron 生成 JAR-006C 全部 11 张视觉证据，覆盖 1440×900、
+  1024×900、preparing/playing/stopped/error 和 reduced-motion。Settings 懒加载在连续
+  evidence 启动中偶发停留，改为主入口直接导入以保证产品入口和证据稳定；代价是主包增大。
+- 2026-08-01：本地假 Provider 增加 MiniMax 形状 `/v1/t2a_v2`。未使用真实凭据；项目
+  所有者真实 MiniMax 验收、实际首段延迟和音色质量仍是 Draft PR 的唯一完成门槛。
+- 2026-08-01：生产 Electron 本地验收通过：合成返回 typed `Uint8Array`（10 bytes）、
+  取消返回 `cancelled`、Key 只显示 `8642`、Provider ID 为 `minimax`。200% zoom 进入可滚动
+  单列布局，1440/1024 与 reduced-motion 均可操作。
+- 2026-08-01：最终质量门禁通过：format、lint、strict typecheck、45 个测试文件 / 165 项
+  测试、build、Electron IPC smoke。Renderer bundle 802.32 kB，记录为后续拆包风险。
+
+- 2026-08-01: Began JAR-006C on `feat/jar-006c-real-tts` after reading the repository instructions,
+  every requested product/architecture/voice/Provider/security/status/task document, the complete
+  current ExecPlan, JAR-004 through JAR-006B evidence manifests and Superdesign instructions/init
+  context. Confirmed that JAR-007 and all cloning-studio work remain excluded.
+- 2026-08-01: Audited the real Settings/AppShell render branch, Conversation completion flow,
+  canonical VoiceController, local playback, preload and main Provider/STT patterns. The existing
+  external-response path enters local speech synthesis directly; JAR-006C must separate response
+  completion from TTS orchestration to prevent double audio while preserving one derived Orb state.
+- 2026-08-01: Verified current MiniMax primary documentation for Bearer `/v1/t2a_v2`, non-streaming
+  hex output, `speech-2.8-turbo` / `speech-2.8-hd`, voice/speed/volume/pitch/language fields,
+  `base_resp`, `trace_id`, `usage_characters`, and optional `/v1/get_voice` categories. Voice
+  discovery remains optional; manual authorized `voice_id` binding is mandatory.
 
 - 2026-07-29: Read `AGENTS.md`, `README.md`, `PLANS.md`, every product document listed by README, the three accepted ADRs, the GitHub workflow, JAR task list, and this ExecPlan before modifying repository files.
 - 2026-07-29: Refined the plan with the JAR-001 workspace shape, IPC boundary, development-data location, and production-build smoke verification. Product scope was not expanded.

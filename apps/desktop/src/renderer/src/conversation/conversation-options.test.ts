@@ -12,6 +12,7 @@ describe('parseConversationOptions', () => {
       evidence: 'offline',
       focusComposer: true,
       reducedMotion: true,
+      ttsEvidence: null,
       voiceEvidence: 'listening',
     });
   });

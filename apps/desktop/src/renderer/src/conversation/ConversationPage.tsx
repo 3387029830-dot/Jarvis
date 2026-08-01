@@ -9,6 +9,7 @@ import { useVoiceController } from '../voice/use-voice-controller';
 import { createVoiceEvidenceState } from '../voice/voice-evidence';
 import { VoiceInteraction } from '../voice/VoiceInteraction';
 import { takeVoiceTranscriptHandoff } from '../voice/voice-handoff';
+import { useTtsPlayback } from '../voice/use-tts-playback';
 import { defaultConversationScenario, findConversationScenario } from './conversation-data';
 import { parseConversationOptions } from './conversation-options';
 import type { ConversationTurn } from './types';
@@ -29,9 +30,15 @@ function formatTurnTime(value: string): string {
 
 function TurnBlock({
   onRetry,
+  onSpeak,
+  onStopSpeaking,
+  speechState,
   turn,
 }: {
   onRetry(): void;
+  onSpeak(): void;
+  onStopSpeaking(): void;
+  speechState: { readonly active: boolean; readonly enabled: boolean; readonly status: string };
   turn: ConversationTurn;
 }): React.JSX.Element {
   const source =
@@ -63,6 +70,22 @@ function TurnBlock({
           <p className="conversation-turn__quiet">{copy.conversation.streaming}</p>
         )}
       </div>
+      {turn.role === 'jarvis' && turn.status === 'complete' && speechState.enabled ? (
+        <div className="conversation-turn__speech">
+          <Button
+            size="small"
+            variant="quiet"
+            onClick={speechState.active ? onStopSpeaking : onSpeak}
+          >
+            {speechState.active ? '停止朗读' : '朗读回答'}
+          </Button>
+          {speechState.active ? (
+            <span aria-live="polite">
+              {speechState.status === 'preparing' ? '正在准备语音…' : '正在朗读'}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {turn.status === 'streaming' ? (
         <p className="conversation-turn__status" role="status">
           <span aria-hidden="true" />
@@ -121,6 +144,22 @@ export function ConversationPage({
   const isRealMode = session.providerConfig?.mode === 'real';
   const syncVoice = session.syncVoice;
   const voiceController = useVoiceController();
+  const ttsPlayback = useTtsPlayback();
+  const { config: ttsConfig, play: playTts, snapshot: ttsSnapshot, stop: stopTts } = ttsPlayback;
+  const ttsView = options.ttsEvidence
+    ? {
+        activeTurnId:
+          options.ttsEvidence === 'error' || options.ttsEvidence === 'stopped'
+            ? null
+            : (session.state.turns.findLast((turn) => turn.role === 'jarvis')?.id ?? null),
+        error: options.ttsEvidence === 'error' ? '语音合成没有完成，文字回答仍可阅读。' : null,
+        firstSegmentLatencyMs: 286,
+        status: options.ttsEvidence,
+      }
+    : ttsSnapshot;
+  const ttsEnabled =
+    options.ttsEvidence !== null ||
+    (ttsConfig?.mode === 'real' && ttsConfig.playbackMode !== 'off');
   const [voiceMode, setVoiceMode] = useVoiceInteractionMode();
   const voiceButtonRef = useRef<HTMLButtonElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -134,9 +173,18 @@ export function ConversationPage({
   const activeVoiceResponseIdRef = useRef<string | null>(null);
   const [showLatestAction, setShowLatestAction] = useState(false);
   const isGenerating = session.state.activeResponseId !== null;
-  const voiceState = options.voiceEvidence
+  const baseVoiceState = options.voiceEvidence
     ? createVoiceEvidenceState(options.voiceEvidence)
     : voiceController.state;
+  const voiceState =
+    ttsView.status === 'playing' || ttsView.status === 'preparing'
+      ? {
+          ...baseVoiceState,
+          phase:
+            ttsView.status === 'playing' ? ('speaking' as const) : ('responding_text' as const),
+          response: baseVoiceState.response || '正在准备语音表达。',
+        }
+      : baseVoiceState;
   const prefersReducedMotion =
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -215,7 +263,7 @@ export function ConversationPage({
     activeVoiceResponseIdRef.current = null;
     if (response.status === 'complete') {
       voiceController.replaceExternalResponse(response.content);
-      voiceController.completeExternalResponse();
+      voiceController.settleExternalResponse();
     } else if (response.status === 'failed') {
       voiceController.failExternalResponse(
         response.providerError?.message ?? 'Conversation 回答没有完成，转录文字仍保留在时间线。',
@@ -224,6 +272,22 @@ export function ConversationPage({
       voiceController.cancel();
     }
   }, [session.state.turns, voiceController]);
+
+  const newestCompletedTurn = session.state.turns.findLast(
+    (turn) => turn.role === 'jarvis' && turn.status === 'complete',
+  );
+  const automaticPlaybackRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      ttsConfig?.mode === 'real' &&
+      ttsConfig.playbackMode === 'automatic' &&
+      newestCompletedTurn &&
+      automaticPlaybackRef.current !== newestCompletedTurn.id
+    ) {
+      automaticPlaybackRef.current = newestCompletedTurn.id;
+      playTts(newestCompletedTurn.id, newestCompletedTurn.content);
+    }
+  }, [newestCompletedTurn, ttsConfig?.mode, ttsConfig?.playbackMode, playTts]);
 
   useEffect(() => {
     if (options.reducedMotion) {
@@ -235,6 +299,16 @@ export function ConversationPage({
       }
     };
   }, [options.reducedMotion]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && ['preparing', 'playing'].includes(ttsSnapshot.status)) {
+        stopTts();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [stopTts, ttsSnapshot.status]);
 
   useEffect(() => {
     if (!options.focusComposer) {
@@ -273,6 +347,7 @@ export function ConversationPage({
     if (!draft.trim() || isGenerating) {
       return;
     }
+    stopTts();
     session.submitText(draft);
     setDraft('');
   }
@@ -396,8 +471,25 @@ export function ConversationPage({
               </p>
             </div>
             {session.state.turns.map((turn) => (
-              <TurnBlock key={turn.id} onRetry={session.retry} turn={turn} />
+              <TurnBlock
+                key={turn.id}
+                onRetry={session.retry}
+                onSpeak={() => playTts(turn.id, turn.content)}
+                onStopSpeaking={stopTts}
+                speechState={{
+                  active: ttsView.activeTurnId === turn.id,
+                  enabled: ttsEnabled,
+                  status: ttsView.status,
+                }}
+                turn={turn}
+              />
             ))}
+            {ttsView.status === 'error' ? (
+              <div className="conversation-tts-fallback" role="alert">
+                <strong>语音合成没有完成</strong>
+                <span>文字回答完整保留。你可以重试朗读，或继续使用文字。</span>
+              </div>
+            ) : null}
           </section>
 
           <aside aria-labelledby="intersections-title" className="conversation-intersections">
@@ -547,6 +639,7 @@ export function ConversationPage({
                     isGenerating
                       ? () => {
                           session.cancel();
+                          stopTts();
                           if (activeVoiceResponseIdRef.current) {
                             voiceController.cancel();
                           }
@@ -573,7 +666,13 @@ export function ConversationPage({
             data-testid="conversation-composer-voice"
           >
             <VoiceInteraction
-              controller={voiceController}
+              controller={{
+                ...voiceController,
+                pressStart: () => {
+                  stopTts();
+                  voiceController.pressStart();
+                },
+              }}
               isEvidence={options.voiceEvidence !== null}
               mode={voiceMode}
               onModeChange={setVoiceMode}

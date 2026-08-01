@@ -15,6 +15,10 @@ import { OpenAICompatibleSpeechToTextProvider } from './speech/openai-compatible
 import { SpeechConfigStore } from './speech/speech-config-store';
 import { registerSpeechHandlers } from './speech/speech-ipc';
 import { SpeechService } from './speech/speech-service';
+import { MiniMaxTextToSpeechProvider } from './tts/minimax-tts-provider';
+import { TtsConfigStore } from './tts/tts-config-store';
+import { registerTtsHandlers } from './tts/tts-ipc';
+import { TtsService } from './tts/tts-service';
 
 const isSmokeTest = process.env.JARVIS_SMOKE_TEST === '1';
 const showcaseEvidence = resolveShowcaseEvidenceOptions(process.env);
@@ -58,6 +62,12 @@ async function verifyRendererBridge(window: BrowserWindow): Promise<void> {
       const { runSpeechAcceptance } = await import('./speech/speech-acceptance');
       const acceptance = await runSpeechAcceptance(window);
       console.log(`JARVIS_SPEECH_ACCEPTANCE_OK ${JSON.stringify(acceptance)}`);
+    }
+
+    if (process.env.JARVIS_TTS_ACCEPTANCE === '1') {
+      const { runTtsAcceptance } = await import('./tts/tts-acceptance');
+      const acceptance = await runTtsAcceptance(window);
+      console.log(`JARVIS_TTS_ACCEPTANCE_OK ${JSON.stringify(acceptance)}`);
     }
 
     const screenshotPath = process.env.JARVIS_SMOKE_SCREENSHOT;
@@ -134,6 +144,13 @@ app.whenReady().then(async () => {
       new SpeechConfigStore(app.getPath('userData'), safeStorage),
       providerStore,
       new OpenAICompatibleSpeechToTextProvider(),
+    ),
+  );
+  registerTtsHandlers(
+    ipcMain,
+    new TtsService(
+      new TtsConfigStore(app.getPath('userData'), safeStorage),
+      new MiniMaxTextToSpeechProvider(),
     ),
   );
   await createMainWindow();

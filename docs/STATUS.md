@@ -2,9 +2,9 @@
 
 最后更新：2026-08-01
 
-当前版本：`0.1.0` / JAR-006B
+当前版本：`0.1.0` / JAR-006C Draft
 
-当前阶段：JAR-006B 已完成；JAR-006C 尚未开始
+当前阶段：JAR-006C 代码与本地验收已完成；等待项目所有者真实 MiniMax TTS 验收
 
 ## 已真实实现
 
@@ -69,6 +69,16 @@
   配置恢复、Key 末四位脱敏、日志与仓库隐私检查，以及麦克风和音频资源释放均通过。
 - 键盘导航、清晰焦点、reduced-motion 和低性能静态 Orb 回退。
 - format、lint、strict typecheck、单元/组件测试、build、Electron IPC smoke 和 GitHub CI 配置。
+- vendor-neutral `TextToSpeechProvider` 契约、main-process MiniMax `/t2a_v2` 适配器、
+  Bearer 请求、timeout、取消、响应上限、分类错误和 main 内 hex 解码。
+- TTS 配置、完整 Key 的 `safeStorage` 加密、末四位脱敏、版本化存储与独立播放模式。
+- 中文 Markdown/链接/代码清理、确定性语义分段、最多两段预取、严格顺序无重叠播放。
+- `idle / preparing / playing / stopped / completed / error` 播放状态；停止、新录音、
+  新文字、Escape 和卸载会取消请求、暂停音频并释放 Blob URL。
+- Original / Licensed Character / Consented Clone Voice Profile 数据契约；产品 profile ID 与
+  MiniMax voice ID 分离，缺少授权元数据或授权过期时不能安装、选择或试听。
+- 四个不含 Provider voice ID 的原创表达模板，以及真实绑定安装、试听和显式选择 UI。
+- TTS 错误不删除或遮挡文字回答；手动播放为默认，自动播放和关闭模式可持久化。
 
 ## 使用 Mock 数据模拟
 
@@ -89,13 +99,12 @@
 
 ## 尚未实现
 
-- 真实 TTS。
+- 项目所有者真实 MiniMax TTS 最终验收（当前仅完成 fetch stub、本地假 Provider 与生产 Electron 验收）。
 - Conversation、消息或探索的本地持久化。
 - SQLite、本地会话持久化和认知事件。
 - 真实认知提取、用户确认与观点修订历史。
 - 星图、演变和档案页面。
 - Obsidian 同步或导出。
-- Voice Profile 安装、预览、授权校验或 Provider binding。
 
 ## 当前可访问和体验的页面
 
@@ -107,7 +116,7 @@
 - `#/conversation?exploration=uncertainty-and-crowd`：心理学 × 经济学 × 群体行为。
 - `#/conversation?exploration=money-consensus-institution`：货币 × 共识 × 制度。
 - `#/conversation?exploration=knowledge-action-gap`：知识 × 行动 × 自我叙事。
-- `#/settings`：分章节配置 Conversation 和 Speech-to-Text Provider。
+- `#/settings`：分章节配置 Conversation、Speech-to-Text、Text-to-Speech 与 Voice Profiles。
 - `#/design-system`：仅开发验证使用的设计系统展示页，不出现在产品导航中。
 
 在 Presence 或 Conversation 中可体验真实录音与本地 Mock 闭环；配置 real STT 后，
@@ -118,8 +127,8 @@
 ## 已知问题
 
 - Windows 是当前主要视觉验收环境；其他系统的中文字体渲染可能略有不同。
-- Renderer 入口 bundle 从 JAR-005 的 689.62 kB 增至约 704.65 kB；Settings 另有
-  15.58 kB JS / 5.99 kB CSS 懒加载分包。Conversation 拆分暂缓，避免在共享语音控制器上引入高风险切割。
+- Renderer 入口 bundle 约 802 kB；为消除 Electron 视觉验收中 Settings 懒加载偶发停留，
+  当前 Settings 已回到主入口，后续应在不破坏语音生命周期的前提下重新拆分。
 - 200% 缩放下布局会转为顶部精简导航并依赖纵向滚动，功能可用但信息密度明显降低。
 - speechSynthesis 的中文音色、语速和可用性受 Windows 已安装语音影响；不可用时只播放确定性短音，不会伪装成真实语音合成。
 - 首次系统权限提示可能暂时抢走应用键盘焦点；界面在权限返回前保持 requesting，提前松开后会停止迟到的 stream。
@@ -131,7 +140,9 @@
 - 真实 Provider 最终验收已通过，但仓库、测试、截图和日志仍不得包含真实 API Key 或
   私人 Provider 回答。
 - 浏览器 hash 路由足以覆盖当前两个产品页，但路由继续增加时应重新评估。
-- Voice Profile 当前只有文档契约；仓库不内置未经授权的具体人物或演员声音。
+- 仓库不内置任何具体人物、演员或角色 voice ID / 音频；四个模板均未绑定，必须由用户
+  提供可验证授权与 Provider voice ID。
+- MiniMax 真实账户、费用、区域、voice ID 与中文自然度尚待项目所有者最终验收。
 - 不同 OpenAI-compatible STT 服务对 MIME、语言、usage 和错误状态的实现仍可能不同；
   当前结论只覆盖本地假 Provider 和项目所有者实际使用的第三方 Provider。
 - real STT 失败重试会在 Renderer 内存中短暂保留当前一份录音；应用退出、取消、成功、
@@ -139,5 +150,5 @@
 
 ## 下一步
 
-JAR-006B 合并后，下一项建议为 JAR-006C：真实 TTS 与 Voice Profile binding；当前尚未
-创建分支，也未开始实现。
+先完成 JAR-006C 项目所有者真实 MiniMax TTS 验收并收尾 Draft PR；在此之前不建议进入
+JAR-007，也不创建 JAR-007 分支。
