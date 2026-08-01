@@ -599,6 +599,9 @@ For JAR-005 specifically:
 - 2026-08-01: Final local closeout gates passed: formatting, lint, strict typecheck, 141 tests across
   40 files, production build and Electron IPC smoke (`JARVIS_IPC_SMOKE_OK`). The renderer entry
   remains 726.64 kB; no bundle refactor was added to this closeout.
+- 2026-08-01: Pushed project-owner acceptance documentation as `534ebec`; GitHub Actions Quality
+  gates run `30684722886` passed in 1 minute 8 seconds. A final documentation-only record commit
+  will be required to make the repository log self-contained before Ready and squash merge.
 
 ## JAR-006B deviations and final acceptance
 

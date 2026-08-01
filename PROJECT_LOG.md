@@ -510,7 +510,8 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
 - 1440×900、1024×900、200% 缩放和 reduced-motion：生产 Electron 视觉检查通过。
 - format、lint、typecheck、test、build、smoke：最终质量门禁全部通过。
 - GitHub CI：Draft PR #5 首轮 Quality gates 通过（run `30605983259`，1 分 11 秒）；
-  最终文档提交后再次确认。
+  项目所有者验收文档提交 `534ebec` 的 Quality gates 再次通过（run `30684722886`，
+  1 分 08 秒）。
 - 项目所有者第三方真实 STT Provider 验收：通过。覆盖真实麦克风中文、数字和英文缩写、
   待确认与编辑、voice / transcriptionEdited 元数据、草稿替换/追加/保留、取消无迟到
   结果、重新识别和文字回退、真实 Conversation 串联、重启配置、Key 脱敏、隐私检查及
@@ -572,7 +573,8 @@ JAR-006：实现 vendor-neutral Provider contracts、Voice Profile 代码契约�
 - test：40 个测试文件、141 项测试全部通过。
 - build：通过；Renderer entry 为 726.64 kB，Settings 保持懒加载分包。
 - smoke：通过；production Electron 返回 `JARVIS_IPC_SMOKE_OK`。
-- GitHub Quality gates：最终文档提交后重新确认。
+- GitHub Quality gates：项目所有者验收文档提交 `534ebec` 通过（run `30684722886`，
+  1 分 08 秒）。
 
 ### 视觉证据
 
