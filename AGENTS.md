@@ -18,6 +18,7 @@ The product helps a curious user:
 
 Before modifying code, read the relevant documents under `docs/`.
 For work spanning multiple modules or more than one vertical slice, create or update an ExecPlan under `docs/plans/` according to `PLANS.md`.
+At the start of a new session, read the root `PROJECT_MEMORY.md` as the durable project handoff before relying on chat context.
 
 ## Current product priority
 

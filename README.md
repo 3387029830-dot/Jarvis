@@ -159,6 +159,8 @@ corepack pnpm smoke
 
 ## 项目文档
 
+- [项目记忆与新窗口交接](PROJECT_MEMORY.md)
+
 - [产品章程](docs/PRODUCT_CHARTER.md)
 - [体验规范](docs/EXPERIENCE_SPEC.md)
 - [前端规范](docs/FRONTEND_SPEC.md)
