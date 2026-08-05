@@ -214,3 +214,12 @@ Foundation target:
   and generation actions stay inside text; voice status stays inside the fixed voice container.
 - At 1024 px the identity area moves above text/voice; below the effective 860 px layout created by
   200% zoom, the three areas stack vertically and remain keyboard operable.
+
+## 14. JAR-006C TTS and Voice Profile UI
+
+- Settings has four mounted chapters: Conversation、Speech-to-Text、Text-to-Speech、Voice Profiles。
+- Voice Profile library uses editorial cards for four original templates; cards show binding and
+  selection truthfully and do not resemble a marketplace.
+- Conversation completed answers use a compact fixed `朗读回答 / 停止朗读` action and live text.
+- Orb derives from the same TTS snapshot as the action; no second visible voice state is invented.
+- TTS evidence covers 1440×900, 1024×900 and reduced-motion. Playback state must not shift composer.

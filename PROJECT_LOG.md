@@ -4,6 +4,155 @@
 
 ---
 
+## 2026-08-05 — JAR-006C 收尾安全复核与本地回归
+
+### 本次目标
+
+在项目所有者真实 MiniMax TTS 验收前，复核 JAR-006C 的 Provider 边界、Voice Profile 授权
+契约和 Renderer 数据暴露，补齐发现的回归风险，并保留 Draft PR #6。
+
+### 实现内容
+
+- Renderer 的 TTS 公共配置改为只返回 Voice Profile 展示摘要，不再暴露 Provider voice ID。
+- 连接测试与正式合成都在 main 重新检查 profile 是否存在、绑定完整、授权类别与依据匹配，
+  并拒绝非法或过期授权。
+- 持久化配置读取也会重新验证 Base URL、超时和 profile 结构；手工损坏的配置安全回退为默认
+  Mock 状态，不会继续请求 Provider。
+- TTS Base URL 改为复用统一 Provider URL 安全规则，拒绝远程 HTTP、URL 凭据、query、fragment
+  和隐式重定向。
+- 安装成功后清理声线绑定表单的脏状态，避免重复提交旧授权信息。
+- 新增 URL、授权依据、非法日期、公共配置脱敏和过期 profile 服务回归测试；假 Provider
+  acceptance fixture 补齐授权依据。
+
+### 用户现在可以做什么
+
+- 在不向 Renderer 暴露 Provider voice ID 的前提下查看已安装声线摘要。
+- 通过本地假 Provider 验证 TTS typed IPC、hex 解码、配置脱敏、取消和凭据清理。
+- 只有授权完整且未过期的声线才会进入连接测试或正式合成。
+
+### 用户目前还不能做什么
+
+- 尚未使用真实 MiniMax 账户验证真实音色、首段延迟、费用和区域可用性。
+- 不能把本地假 Provider 或仓库视觉证据当作真实 MiniMax 声音质量证明。
+- 不能使用 `/get_voice` 自动发现、SQLite、Conversation 持久化或认知事件；不得开始 JAR-007。
+
+### 验证结果
+
+- `corepack pnpm format:check`：通过。
+- `corepack pnpm lint`：通过。
+- `corepack pnpm typecheck`：通过。
+- `corepack pnpm test`：通过，47 个测试文件、174 项测试。
+- `corepack pnpm build`：通过，Renderer 入口约 802.68 kB。
+- `corepack pnpm smoke`：通过，返回 `JARVIS_IPC_SMOKE_OK`。
+- 本地假 Provider + TTS Electron acceptance：通过，返回 `JARVIS_TTS_ACCEPTANCE_OK`，
+  `audioBytes=10`、取消成功、Key 仅显示 `8642`；这不是真实 MiniMax 验收。
+- 首次在受限沙箱运行 Vitest 因 esbuild 子进程 `spawn EPERM` 失败，放宽构建子进程权限后
+  重跑通过；没有测试断言失败。
+
+### 视觉证据
+
+- 现有 `artifacts/jar-006c/` 11 张截图继续有效；本轮只收紧安全契约，没有改变视觉状态。
+- `artifacts/jar-006c/README.md` 已补充本轮公共 profile、URL 和授权校验复核说明。
+
+### 已知问题
+
+- 项目所有者真实 MiniMax TTS 验收仍是 JAR-006C 完成门槛，当前 PR #6 必须保持 Draft。
+- Renderer 入口 bundle 偏大；本轮未扩大范围做拆包重构。
+
+### 下一步
+
+项目所有者在 Jarvis 设置页手动完成真实 MiniMax 验收并反馈每项通过/失败/未执行；在此之前
+不转 Ready、不合并、不创建 JAR-007 分支。
+
+---
+
+## 2026-08-05 — 持久化项目记忆与新窗口交接
+
+### 本次目标
+
+解决旧聊天记录丢失后，新窗口无法获得项目背景的问题，并确保项目上下文不再依赖单个聊天会话。
+
+### 实现内容
+
+- 新增根目录 `PROJECT_MEMORY.md`，集中记录产品身份、长期约束、JAR-001 至 JAR-006C 历史、
+  当前分支、Draft PR、验证结果、遗留风险和后续工作顺序。
+- 在 `AGENTS.md` 中要求新会话先读取持久化项目记忆，再依赖聊天上下文。
+- 在 `README.md` 增加项目记忆入口。
+
+### 用户现在可以做什么
+
+- 在新窗口中直接要求执行者先读取 `PROJECT_MEMORY.md`，恢复可验证的项目上下文。
+- 通过仓库文件继续维护计划、状态和任务边界，不需要依赖旧账号的隐藏记忆。
+
+### 本次明确不能做到什么
+
+- 无法恢复已从平台丢失的原始聊天逐字内容、旧账号隐藏记忆或未写入仓库的临时讨论。
+- `PROJECT_MEMORY.md` 只记录已由仓库、Git 和项目所有者验收结果支持的事实，不猜测缺失内容。
+
+### 验证结果
+
+- 已核对当前分支 `feat/jar-006c-real-tts`、最新提交 `381edcb` 和 Draft PR #6；JAR-006C
+  实现提交为父提交 `7153a4c`。
+- `PROJECT_MEMORY.md` 已链接到 README，并纳入新会话必读规则。
+- 运行 `corepack pnpm format:check`，通过。
+
+### 下一步
+
+新窗口先读取 `PROJECT_MEMORY.md` 与相关文档；项目工作仍停留在 JAR-006C，等待真实 MiniMax TTS 验收，
+不开始 JAR-007。
+
+---
+
+## 2026-08-01 — JAR-006C 真实语音合成与声线系统（Draft）
+
+### 本次目标
+
+建立 vendor-neutral TTS、MiniMax 中文语音适配、授权 Voice Profile 绑定和可打断的内存播放闭环。
+
+### 实现内容
+
+- 新增 `TextToSpeechProvider` 契约和 `MiniMaxTextToSpeechProvider`，main 调用 `/t2a_v2` 并解码 hex。
+- 新增 `tts-config.v1.json`、`safeStorage` 凭据、末四位遮罩和手动/自动/关闭播放模式。
+- 新增 Markdown/链接/代码清理、中文语义分段、最多两段预取、顺序无重叠播放和 session 隔离。
+- 新增停止、Escape、新录音、新文字与卸载清理；错误保留完整文字回答。
+- 新增四个未绑定原创模板、三类 Voice Profile、授权有效性校验、手动 binding、试听和显式选择。
+- 设置页扩展为四个 Editorial Chapters，并保留跨章节未保存状态。
+- 依据 Superdesign A+B，将 Provider 配置保持紧凑，并以编辑性声线档案呈现表达身份。
+
+### 用户现在可以做什么
+
+- 安装具有完整授权元数据的 MiniMax voice ID 绑定并显式选择。
+- 选择手动、自动或关闭朗读；在完成回答上朗读、停止或用 Escape / 新录音打断。
+- TTS 失败时继续阅读完整文字，并重新尝试朗读。
+
+### 本轮尚不能做什么
+
+- 尚未由项目所有者使用真实 MiniMax 账户完成最终验收，因此不能宣称 JAR-006C 完成。
+- 不支持 `/get_voice` 自动发现、跨重启音频、SQLite、对话持久化或认知提取。
+- 仓库不内置角色、演员或克隆声音及真实音频。
+
+### 验证结果
+
+- format、lint、strict typecheck、165 项测试、build 与 Electron IPC smoke 全部通过。
+- 生产 Electron IPC smoke 与 11 张 1440/1024/reduced-motion 视觉证据已生成。
+- 本地假 Provider 实现 `/v1/t2a_v2`；生产 Electron 验收确认二进制 IPC、Key 末四位、
+  合成、取消无迟到结果，返回 `audioBytes=10`。真实 MiniMax 验收待项目所有者执行。
+
+### 视觉证据
+
+- `artifacts/jar-006c/`：配置、声线档案、试听/绑定、preparing/playing/stopped/error、1024 与 reduced-motion 共 11 张截图。
+
+### 已知问题
+
+- MiniMax 账户区域、voice ID 可用性、费用、首段真实延迟与中文自然度尚未实测。
+- Renderer 入口约 802 kB；Settings 为避免 Electron 懒加载偶发停留暂时并回主包。
+
+### 下一步
+
+项目所有者完成真实 MiniMax TTS 最终验收后收尾 JAR-006C Draft PR；此前不开始 JAR-007。
+
+---
+
 ## 2026-07-29 — 产品方向确立
 
 ### 本次目标

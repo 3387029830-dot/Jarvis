@@ -2,9 +2,9 @@
 
 ## 当前范围
 
-JAR-006A 已实现真实文字 Conversation。JAR-006B 已完成真实 STT 代码、本地验收、生产
-Electron 验收和项目所有者第三方真实 STT Provider 手工验收。真实 TTS 与 Voice
-Profile Provider binding 属于尚未开始的 JAR-006C。
+JAR-006A 已完成真实文字 Conversation，JAR-006B 已完成真实 STT。JAR-006C 已实现真实
+MiniMax TTS 代码、本地假 Provider、生产 Electron 和视觉验收，仍等待项目所有者真实
+MiniMax 账户最终验收。
 
 当前适配器名为 `OpenAICompatibleConversationProvider`，实现 OpenAI-compatible Chat
 Completions SSE，但核心契约不绑定 OpenAI、OpenRouter 或某个模型。模型 ID 由用户填写，
@@ -90,3 +90,21 @@ malformed response 等 Provider 错误。
 - Key：任意仅用于本地测试的虚构值
 
 它验证真实 multipart HTTP、typed binary IPC、取消和遮罩，不代表第三方语音识别质量。
+
+## Text-to-Speech Provider
+
+`TextToSpeechProvider` 是 vendor-neutral main-process 契约；首个适配器
+`MiniMaxTextToSpeechProvider` 调用 `{Base URL}/t2a_v2`。默认 Base URL 为
+`https://api.minimax.io/v1`，默认模型 `speech-2.8-turbo`，可选 `speech-2.8-hd`，输出 mp3。
+请求固定为非流式 hex 输出，hex 只在 main 解码成 `Uint8Array`，不会进入 React state。
+
+Renderer 只能提交 `requestId / text / voiceProfileId`；不能指定任意 URL、header、voice ID
+或 Provider payload。main 从已安装且授权有效的 Voice Profile 解析 voice ID，并负责
+凭据、timeout、取消和响应限制。本地假 Provider 的 `/v1/t2a_v2` 用于验证契约，不代表
+真实 MiniMax 声线质量。`/get_voice` 尚未实现；用户必须手动绑定 voice ID。
+
+TTS 的 Base URL 与 Conversation / STT 共用同一 URL 安全策略：公网只允许 HTTPS，拒绝
+用户名、密码、query、fragment 和自动重定向。公共配置中的 profile 只包含展示所需摘要，
+`providerVoiceId` 只在 main 的配置存储和 Provider 请求路径中解析。连接测试与正式合成
+都会重新检查 profile 的授权类别、匹配的 `authorization.basis`、有效到期日和非空绑定；
+配置文件被手工损坏或授权过期时不会继续请求 Provider。

@@ -7,7 +7,7 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 ## 当前版本
 
 - 软件包版本：`0.1.0`
-- 当前里程碑：**JAR-006B — 真实语音识别（已完成）**
+- 当前里程碑：**JAR-006C — 真实语音合成与声线系统（Draft，待真实 MiniMax 验收）**
 - 产品默认语言：简体中文
 - 当前真实能力与 Mock 边界：[docs/STATUS.md](docs/STATUS.md)
 
@@ -37,22 +37,26 @@ Jarvis 帮助用户持续探索问题、保留真正有意义的认知变化，�
 - [x] 独立 STT 凭据或 Conversation 凭据引用、`safeStorage` 加密与末四位脱敏
 - [x] “语音转录待确认”、可编辑确认、草稿替换/追加保护和 voice 来源元数据
 - [x] Editorial Chapters 设置页与跨章节未保存状态保护
+- [x] vendor-neutral TTS 契约、MiniMax `/t2a_v2` main-process 适配器与 hex 解码
+- [x] 中文语音文本规范化、确定性语义分段、最多两段预取与顺序播放队列
+- [x] 手动 / 自动 / 关闭播放模式、停止、Escape / 新录音打断、内存音频清理与文字回退
+- [x] Original / Licensed Character / Consented Clone Voice Profile 契约与授权有效性校验
+- [x] 四个原创声线人格模板、手动 Provider voice ID 绑定、试听与显式选择
 - [x] reduced-motion 与低性能静态 Orb 回退
 - [x] format、lint、typecheck、test、build、smoke 与 GitHub CI
 
 ## 当前开发阶段
 
-**JAR-006B：真实语音识别** 已完成代码、本地假 Provider、生产 Electron 和项目所有者
-第三方真实 STT Provider 验收。真实模式
-会把本次录音经二进制 IPC 交给 main process，再调用 OpenAI-compatible
-`/audio/transcriptions`；结果先进入现有文字区等待用户确认，不会自动发给 Conversation。
+**JAR-006C：真实语音合成与声线系统** 已完成代码、本地假 Provider、生产 Electron、
+测试和视觉验收。MiniMax 真实适配器已实现，但仍等待项目所有者用自己的真实账户完成
+最终验收，因此本任务和 JAR-006 整体尚未标记完成。
 
 如果文字区已有草稿，Jarvis 默认保留原文，并要求明确选择“替换草稿”或“追加转录”。
 项目所有者已验证真实麦克风中文、数字与英文缩写转录、取消、草稿保护、重启后配置恢复、
 Key 脱敏以及音频资源释放。真实凭据、私人录音和私人转录均未进入仓库。
 
-真实 TTS、Voice Profile Provider binding、持久化和认知提取仍未实现。Mock STT 仍可
-独立使用，Conversation 的 Mock / real 配置也与 STT 独立。请以
+对话持久化和认知提取仍未实现。Mock STT 仍可独立使用，Conversation、STT 和 TTS 的
+Mock / real 配置彼此独立。请以
 [docs/STATUS.md](docs/STATUS.md) 为当前真实功能清单。
 
 ## 如何启动
@@ -108,6 +112,16 @@ corepack pnpm dev
 本地假 STT 使用同一个 `provider:fake` 服务，模型填写 `jarvis-local-fake-stt`。它验证
 multipart、二进制 IPC、取消和脱敏，不代表第三方识别质量。
 
+配置真实语音合成：
+
+1. 打开“设置 → 声线档案”，选择原创模板并填写 MiniMax voice ID 与完整授权元数据。
+2. 安装绑定后显式设为当前声线；试听可能产生 Provider 费用，但不会自动改变当前声线。
+3. 打开“设置 → 语音合成”，填写 MiniMax Key，选择 `speech-2.8-turbo` 或 `speech-2.8-hd`。
+4. 选择手动（默认）、自动或不播放。失败时完整文字回答仍可阅读。
+
+本地假 TTS 使用 `provider:fake`、`http://localhost:4317/v1` 和任意虚构 Key；它只验证
+main IPC、MiniMax JSON/hex 契约、取消与清理，不代表真实声线质量。
+
 体验语音闭环：
 
 1. 默认点击“点击说话”开始录音，再点击一次结束；也可切换为“按住说话”。
@@ -140,10 +154,12 @@ corepack pnpm smoke
 6. JAR-006：Provider contracts 与一条真实语音路径
    - JAR-006A：Provider 基础与真实文字对话 — 已完成
    - JAR-006B：真实 STT — 已完成
-   - JAR-006C：真实 TTS 与 Voice Profile binding — 未开始
+   - JAR-006C：真实 TTS 与 Voice Profile binding — Draft，待真实 MiniMax 验收
 7. JAR-007 及以后：本地持久化、认知事件、星图、演变与 Obsidian 导出
 
 ## 项目文档
+
+- [项目记忆与新窗口交接](PROJECT_MEMORY.md)
 
 - [产品章程](docs/PRODUCT_CHARTER.md)
 - [体验规范](docs/EXPERIENCE_SPEC.md)

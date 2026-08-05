@@ -8,6 +8,7 @@ import type {
 import { Badge, Button, Dialog, Panel } from '../design-system';
 import { AppShell } from '../shell/AppShell';
 import { SpeechSettingsChapter } from './SpeechSettingsChapter';
+import { TtsSettingsChapter } from './TtsSettingsChapter';
 import './settings.css';
 
 type Feedback =
@@ -87,11 +88,20 @@ export function SettingsPage(): React.JSX.Element {
     evidence ? null : 'load',
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [activeChapter, setActiveChapter] = useState<'conversation' | 'speech'>(() =>
-    window.location.hash.includes('state=stt-') ? 'speech' : 'conversation',
+  type Chapter = 'conversation' | 'speech' | 'tts' | 'voices';
+  const [activeChapter, setActiveChapter] = useState<Chapter>(() =>
+    window.location.hash.includes('state=stt-')
+      ? 'speech'
+      : window.location.hash.includes('state=tts-')
+        ? 'tts'
+        : window.location.hash.includes('state=voice-')
+          ? 'voices'
+          : 'conversation',
   );
   const [speechDirty, setSpeechDirty] = useState(false);
-  const [pendingChapter, setPendingChapter] = useState<'conversation' | 'speech' | null>(null);
+  const [ttsDirty, setTtsDirty] = useState(false);
+  const [profileDirty, setProfileDirty] = useState(false);
+  const [pendingChapter, setPendingChapter] = useState<Chapter | null>(null);
 
   useEffect(() => {
     if (evidence) {
@@ -145,11 +155,18 @@ export function SettingsPage(): React.JSX.Element {
     model.trim() !== saved.model ||
     mode !== saved.mode;
 
-  function requestChapter(nextChapter: 'conversation' | 'speech'): void {
+  function requestChapter(nextChapter: Chapter): void {
     if (nextChapter === activeChapter) {
       return;
     }
-    const activeDirty = activeChapter === 'conversation' ? conversationDirty : speechDirty;
+    const activeDirty =
+      activeChapter === 'conversation'
+        ? conversationDirty
+        : activeChapter === 'speech'
+          ? speechDirty
+          : activeChapter === 'tts'
+            ? ttsDirty
+            : profileDirty;
     if (activeDirty) {
       setPendingChapter(nextChapter);
       return;
@@ -215,11 +232,10 @@ export function SettingsPage(): React.JSX.Element {
             <p>Settings · Provider paths</p>
             <h1>连接真实的理解路径</h1>
             <span>
-              Conversation 与语音识别分别配置，网络请求与完整 API Key 始终留在 Electron main
-              process。真实语音合成仍未接通。
+              理解与表达分别配置；网络请求、完整 API Key 与音频解码始终留在 Electron main process。
             </span>
           </div>
-          <Badge tone="accent">JAR-006B</Badge>
+          <Badge tone="accent">JAR-006C</Badge>
         </header>
 
         <nav aria-label="Provider 设置章节" className="settings-chapters">
@@ -232,6 +248,26 @@ export function SettingsPage(): React.JSX.Element {
             <strong>文字对话</strong>
             <small>Conversation</small>
             {conversationDirty ? <i>未保存</i> : null}
+          </button>
+          <button
+            aria-current={activeChapter === 'tts' ? 'page' : undefined}
+            onClick={() => requestChapter('tts')}
+            type="button"
+          >
+            <span>03</span>
+            <strong>语音合成</strong>
+            <small>Text-to-Speech</small>
+            {ttsDirty ? <i>未保存</i> : null}
+          </button>
+          <button
+            aria-current={activeChapter === 'voices' ? 'page' : undefined}
+            onClick={() => requestChapter('voices')}
+            type="button"
+          >
+            <span>04</span>
+            <strong>声线档案</strong>
+            <small>Voice Profiles</small>
+            {profileDirty ? <i>未保存</i> : null}
           </button>
           <button
             aria-current={activeChapter === 'speech' ? 'page' : undefined}
@@ -404,6 +440,11 @@ export function SettingsPage(): React.JSX.Element {
         </div>
 
         <SpeechSettingsChapter hidden={activeChapter !== 'speech'} onDirtyChange={setSpeechDirty} />
+        <TtsSettingsChapter
+          active={activeChapter === 'tts' || activeChapter === 'voices' ? activeChapter : null}
+          onDirtyChange={setTtsDirty}
+          onProfileDirtyChange={setProfileDirty}
+        />
       </main>
 
       <Dialog

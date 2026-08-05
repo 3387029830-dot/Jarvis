@@ -190,3 +190,22 @@ MediaRecorder Blob in Renderer memory
   receives raw audio or an unconfirmed transcript.
 - Settings uses mounted Editorial Chapters so unsaved Conversation and STT drafts survive chapter
   switching. A dirty chapter prompts before navigation without discarding either form.
+
+## 12. JAR-006C text-to-speech boundary
+
+```text
+Conversation text → Renderer queue metadata → typed TTS IPC
+  → TtsService / TtsConfigStore in main → TextToSpeechProvider
+  → MiniMax /t2a_v2 → main-only hex decode → Uint8Array
+  → Renderer memory Blob → HTMLAudioElement → revoke URL
+```
+
+- `shared/tts.ts` contains public configuration, profile metadata and narrow commands; it cannot
+  return credentials or accept arbitrary Provider request fields.
+- `tts-config.v1.json` stores public choices, profiles and only `safeStorage` ciphertext plus suffix.
+- Product profile IDs remain separate from Provider voice IDs; authorization is checked at install,
+  select and synthesis time, including expiry.
+- The Renderer queue owns only segment text, request IDs, small status/metrics and current audio;
+  binary audio never enters a large React state and is never persisted.
+- Queue prefetch is bounded at two. Session counters and sender/request-keyed AbortControllers reject
+  stale audio after stop, new playback or new recording.

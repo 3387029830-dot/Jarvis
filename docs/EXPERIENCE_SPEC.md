@@ -138,3 +138,11 @@ Jarvis may say what it remembers and why a past item is relevant. It must not im
 - 重新录音、取消、识别失败和重试不得清空录音前已有的文字草稿。
 - STT 与 Conversation Provider 是两个独立维度，任意 Mock / real 组合都必须诚实显示。
 - 设置使用编辑性章节；章节切换保留未保存状态，并在离开脏表单前给出克制提示。
+
+## JAR-006C：表达与声线
+
+- 回答文字永远先可读；TTS 是可停止、可关闭的表达层，失败不得改变文字内容。
+- `preparing`、`playing`、`stopped`、`error` 在同一固定位置替换状态，不改变 composer 几何。
+- 默认手动朗读；自动朗读必须由用户明确选择。新录音优先并立即打断播放。
+- 声线设置按“理解 / 表达”组织为 Editorial Chapters，不呈现成供应商控制台。
+- 声线模板与真实绑定必须明确区分；未绑定、授权缺失或过期时不提供试听假象。

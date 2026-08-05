@@ -8,7 +8,9 @@ const port = 4317;
 const server = createServer((request, response) => {
   if (
     request.method !== 'POST' ||
-    (request.url !== '/v1/chat/completions' && request.url !== '/v1/audio/transcriptions')
+    (request.url !== '/v1/chat/completions' &&
+      request.url !== '/v1/audio/transcriptions' &&
+      request.url !== '/v1/t2a_v2')
   ) {
     response.writeHead(404).end();
     return;
@@ -54,6 +56,53 @@ const server = createServer((request, response) => {
           );
         }
       }, 220);
+    });
+    return;
+  }
+
+  if (request.url === '/v1/t2a_v2') {
+    let ttsBody = '';
+    request.setEncoding('utf8');
+    request.on('data', (chunk) => {
+      ttsBody += chunk;
+    });
+    request.on('end', () => {
+      let payload;
+      try {
+        payload = JSON.parse(ttsBody);
+      } catch {
+        response.writeHead(400).end();
+        return;
+      }
+      if (
+        !['speech-2.8-turbo', 'speech-2.8-hd'].includes(payload.model) ||
+        !payload.voice_setting?.voice_id
+      ) {
+        response.writeHead(422, { 'content-type': 'application/json' });
+        response.end(
+          JSON.stringify({
+            base_resp: { status_code: 1004, status_msg: 'Invalid local fake TTS configuration.' },
+          }),
+        );
+        return;
+      }
+      setTimeout(() => {
+        if (!response.destroyed) {
+          response.writeHead(200, { 'content-type': 'application/json' });
+          response.end(
+            JSON.stringify({
+              base_resp: { status_code: 0, status_msg: 'success' },
+              data: { audio: '49443304000000000000', status: 2 },
+              extra_info: {
+                audio_length: 240,
+                audio_size: 10,
+                usage_characters: String(payload.text ?? '').length,
+              },
+              trace_id: 'jarvis-local-fake-tts',
+            }),
+          );
+        }
+      }, 160);
     });
     return;
   }

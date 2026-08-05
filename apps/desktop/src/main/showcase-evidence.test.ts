@@ -15,6 +15,7 @@ describe('visual evidence options', () => {
       reducedMotion: false,
       route: 'design-system',
       settingsState: 'empty',
+      ttsState: 'none',
       voiceState: 'live',
       width: 1280,
       zoomFactor: 1,

@@ -108,6 +108,7 @@ export type VoiceAction =
   | { readonly type: 'response-replaced'; readonly response: string; readonly sessionId: number }
   | { readonly type: 'retry-transcription'; readonly sessionId: number }
   | { readonly type: 'speaking-started'; readonly sessionId: number }
+  | { readonly type: 'external-response-completed'; readonly sessionId: number }
   | { readonly type: 'completed'; readonly sessionId: number }
   | { readonly type: 'interrupted'; readonly sessionId: number }
   | { readonly type: 'cancelled'; readonly sessionId: number }
@@ -245,6 +246,11 @@ export function voiceReducer(
         return state;
       }
       return { ...state, phase: 'speaking' };
+    case 'external-response-completed':
+      if (state.phase !== 'responding_text') {
+        return state;
+      }
+      return { ...state, isPressing: false, level: 0, phase: 'idle' };
     case 'completed':
       if (state.phase !== 'speaking') {
         return state;

@@ -9,7 +9,18 @@ export type ConversationEvidenceState =
   | 'real-streaming'
   | 'streaming';
 export type SettingsEvidenceState =
-  'configured' | 'empty' | 'error' | 'success' | 'stt-empty' | 'stt-configured' | 'stt-error';
+  | 'configured'
+  | 'empty'
+  | 'error'
+  | 'success'
+  | 'stt-empty'
+  | 'stt-configured'
+  | 'stt-error'
+  | 'tts-empty'
+  | 'tts-configured'
+  | 'voice-library'
+  | 'voice-preview'
+  | 'voice-binding';
 export type PresenceEvidenceVariant = 'empty' | 'single' | 'populated';
 export type VoiceEvidenceState =
   | 'live'
@@ -38,6 +49,7 @@ export interface ShowcaseEvidenceOptions {
   voiceState: VoiceEvidenceState;
   width: number;
   zoomFactor: number;
+  ttsState: 'none' | 'preparing' | 'playing' | 'stopped' | 'error';
 }
 
 function parseDimension(value: string | undefined, fallback: number, minimum: number): number {
@@ -78,7 +90,12 @@ function parseSettingsState(value: string | undefined): SettingsEvidenceState {
     value === 'success' ||
     value === 'stt-empty' ||
     value === 'stt-configured' ||
-    value === 'stt-error'
+    value === 'stt-error' ||
+    value === 'tts-empty' ||
+    value === 'tts-configured' ||
+    value === 'voice-library' ||
+    value === 'voice-preview' ||
+    value === 'voice-binding'
     ? value
     : 'empty';
 }
@@ -119,6 +136,13 @@ export function resolveShowcaseEvidenceOptions(
     voiceState: parseVoiceState(environment.JARVIS_VOICE_STATE),
     width: parseDimension(environment.JARVIS_SMOKE_WIDTH, 1280, 1024),
     zoomFactor: parseZoomFactor(environment.JARVIS_EVIDENCE_ZOOM),
+    ttsState:
+      environment.JARVIS_TTS_STATE === 'preparing' ||
+      environment.JARVIS_TTS_STATE === 'playing' ||
+      environment.JARVIS_TTS_STATE === 'stopped' ||
+      environment.JARVIS_TTS_STATE === 'error'
+        ? environment.JARVIS_TTS_STATE
+        : 'none',
   };
 }
 
@@ -138,6 +162,9 @@ export function createShowcaseHash(options: ShowcaseEvidenceOptions): string {
     }
     if (options.voiceState !== 'live') {
       parameters.set('voice', options.voiceState);
+    }
+    if (options.ttsState !== 'none') {
+      parameters.set('tts', options.ttsState);
     }
   }
   if (options.route === 'settings') {

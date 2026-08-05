@@ -33,7 +33,7 @@ export type ConversationMode = 'mock' | 'real';
 export interface ProviderError {
   readonly code: ProviderErrorCode;
   readonly message: string;
-  readonly providerId: 'openai-compatible';
+  readonly providerId: 'minimax' | 'openai-compatible';
   readonly requestId: string;
   readonly retryable: boolean;
   readonly safeTechnicalSummary: string;
