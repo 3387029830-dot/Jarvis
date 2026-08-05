@@ -30,11 +30,8 @@ export class TtsService {
     return value;
   }
   async testConfig(input: TtsDraftConfig): Promise<TtsTestResult> {
-    const config = await this.getConfig();
-    const profile = config.profiles.find(
-      (item) => item.id === config.selectedProfileId && isProfileAvailable(item),
-    );
-    if (!profile)
+    const profile = await this.store.getSelectedProfile();
+    if (!profile || !isProfileAvailable(profile))
       return {
         error: toProviderError(
           new ProviderFailure('invalid_configuration', {
@@ -115,7 +112,7 @@ export class TtsService {
         throw new ProviderFailure('invalid_configuration', {
           safeTechnicalSummary: 'tts_real_mode_disabled',
         });
-      const profile = config.profiles.find((item) => item.id === request.voiceProfileId);
+      const profile = await this.store.getProfile(request.voiceProfileId);
       if (!profile || !isProfileAvailable(profile))
         throw new ProviderFailure('invalid_configuration', {
           safeTechnicalSummary: 'voice_profile_unavailable',

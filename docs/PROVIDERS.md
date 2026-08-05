@@ -102,3 +102,9 @@ Renderer 只能提交 `requestId / text / voiceProfileId`；不能指定任意 U
 或 Provider payload。main 从已安装且授权有效的 Voice Profile 解析 voice ID，并负责
 凭据、timeout、取消和响应限制。本地假 Provider 的 `/v1/t2a_v2` 用于验证契约，不代表
 真实 MiniMax 声线质量。`/get_voice` 尚未实现；用户必须手动绑定 voice ID。
+
+TTS 的 Base URL 与 Conversation / STT 共用同一 URL 安全策略：公网只允许 HTTPS，拒绝
+用户名、密码、query、fragment 和自动重定向。公共配置中的 profile 只包含展示所需摘要，
+`providerVoiceId` 只在 main 的配置存储和 Provider 请求路径中解析。连接测试与正式合成
+都会重新检查 profile 的授权类别、匹配的 `authorization.basis`、有效到期日和非空绑定；
+配置文件被手工损坏或授权过期时不会继续请求 Provider。

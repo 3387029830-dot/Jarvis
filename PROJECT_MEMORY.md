@@ -56,8 +56,9 @@ Jarvis 是一个语音优先、以个人认知演变为核心的沉浸式桌面�
 
 - 仓库：`D:\Jarvis`，远程为 `3387029830-dot/Jarvis`。
 - 当前分支：`feat/jar-006c-real-tts`。
-- 最近提交：`7153a4ccd3048ae98b3aa1894c4b60e398fe8726`，标题为
-  `feat: complete JAR-006C real TTS and voice profiles`。
+- 最近提交：`381edcbd9e4a94a92075009a8c06d99cd1a31a7a`，标题为
+  `docs: preserve project memory for new sessions`；JAR-006C 实现提交为其父提交
+  `7153a4ccd3048ae98b3aa1894c4b60e398fe8726`。
 - Draft PR：[#6](https://github.com/3387029830-dot/Jarvis/pull/6)。
 - 当前里程碑：JAR-006C，真实 TTS 与 Voice Profile 系统。
 - PR 必须保持 Draft；不要转 Ready、不要合并、不要创建 JAR-007 分支，也不要提前实现 JAR-007。
@@ -85,13 +86,16 @@ Jarvis 是一个语音优先、以个人认知演变为核心的沉浸式桌面�
 - 回答完成后的朗读、停止、Escape、新录音、新文字、卸载清理和文字回退；
 - Original / Licensed Character / Consented Clone Profile 契约、授权校验、过期拒绝、手动 binding；
 - 四个无 Provider voice ID 的原创模板、试听、选择和 Editorial Chapters 设置页；
-- 45 个测试文件、165 项测试、生产 Electron smoke、本地假 MiniMax HTTP/IPC 验收和 11 张视觉证据。
+- 47 个测试文件、174 项测试、生产 Electron smoke、本地假 MiniMax HTTP/IPC 验收和 11 张视觉证据。
+- 收尾复核确保 Renderer 公共 TTS profile 摘要不含 `providerVoiceId`；连接测试和合成会重新
+  校验授权类别、授权依据、到期日和绑定完整性；TTS Base URL 复用统一 Provider URL 安全策略。
 
 尚未完成：
 
 - 项目所有者尚未用真实 MiniMax 账户完成最终 TTS 验收；因此不能宣称 JAR-006C 或 JAR-006 完成。
 - 尚未验证真实音色自然度、费用、区域可用性、真实 voice ID 和首段延迟。
 - 未实现 `/get_voice` 自动发现、跨重启音频、SQLite、Conversation 持久化、认知提取、星图或 Obsidian。
+- 真实 MiniMax 账户验收前，PR #6 必须继续保持 Draft；本轮没有 Ready、合并或 JAR-007 分支动作。
 
 ## 继续工作时的顺序
 

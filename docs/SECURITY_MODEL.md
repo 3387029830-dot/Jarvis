@@ -31,6 +31,7 @@ ciphertext、末四位和测试时间，并强制恢复 Mock。如果 OS 加密�
 
 - 远程地址只允许 HTTPS；开发期 localhost 可明确使用 HTTP。
 - 拒绝 URL 用户名、密码、query 和 fragment。
+- TTS Base URL 复用同一校验函数，不允许通过单独配置路径放宽 Provider URL 策略。
 - `fetch` 使用 `redirect: "manual"`、45 秒默认超时和 1 MiB 累计流限制。
 - 取消会中止对应 AbortController；活动请求按 WebContents ID 与 request ID 隔离。
 - Renderer 不能指定任意请求头、HTTP 方法或任意网络 payload。
@@ -49,6 +50,7 @@ Mock STT 不上传音频；real STT 只把用户主动结束的当前录音发�
 放弃或应用退出后释放。
 
 TTS 文本只在用户手动朗读或明确启用自动朗读时发送。Renderer 不能读取 Key、Provider
-voice ID 或自由请求 URL；main 校验已安装 profile 授权并解码 hex。返回音频只形成内存
+voice ID 或自由请求 URL；公共 TTS 配置只返回 profile 展示摘要，main 在连接测试和正式
+合成前重新校验授权类别、授权依据、到期日与绑定完整性，并解码 hex。返回音频只形成内存
 Blob，停止、新录音、新文字、错误、完成和卸载都会暂停播放并撤销 URL，不写入磁盘。
 日志、测试与截图不包含真实 Key、私人回答、私人授权文件或真实音频。

@@ -5,6 +5,7 @@ import type {
   TtsMode,
   TtsPlaybackMode,
   TtsPublicConfig,
+  TtsPublicVoiceProfile,
   VoiceProfile,
   VoiceProfileCategory,
 } from '../../../shared/tts';
@@ -57,8 +58,9 @@ function evidenceConfig(): TtsPublicConfig | null {
   const state = new URLSearchParams(window.location.hash.split('?')[1] ?? '').get('state');
   if (!state?.startsWith('tts-') && !state?.startsWith('voice-')) return null;
   if (state === 'tts-empty') return emptyConfig;
-  const installed: VoiceProfile = {
+  const installed: TtsPublicVoiceProfile = {
     authorization: {
+      basis: 'original-work',
       expiresAt: null,
       permittedUse: 'Jarvis 产品视觉验收',
       reference: 'EVIDENCE-006C',
@@ -72,7 +74,6 @@ function evidenceConfig(): TtsPublicConfig | null {
     model: 'speech-2.8-turbo',
     previewText: '我在这里。我们可以从真正好奇的问题开始。',
     providerId: 'minimax',
-    providerVoiceId: 'evidence-voice-id',
     templateId: 'rational-companion',
   };
   return {
@@ -207,6 +208,11 @@ export function TtsSettingsChapter({
     [apiKey, baseUrl, language, model],
   );
   const template = saved.templates.find((item) => item.id === templateId) ?? saved.templates[0];
+  const authorizationBasisByCategory = {
+    original: 'original-work',
+    'licensed-character': 'license',
+    'consented-clone': 'explicit-consent',
+  } as const;
   async function save(): Promise<void> {
     setBusy('save');
     setFeedback(null);
@@ -239,6 +245,7 @@ export function TtsSettingsChapter({
     setBusy('install');
     const profile: VoiceProfile = {
       authorization: {
+        basis: authorizationBasisByCategory[category],
         expiresAt: expiresAt || null,
         permittedUse,
         reference: authorizationReference,
@@ -259,6 +266,10 @@ export function TtsSettingsChapter({
     if (result.ok) {
       setSaved(result.config);
       setVoiceId('');
+      setRightsHolder('');
+      setAuthorizationReference('');
+      setPermittedUse('仅用于本人在 Jarvis 中的语音播放');
+      setExpiresAt('');
       setFeedback({ kind: 'success', message: '声线绑定已安装。它不会自动成为当前声线。' });
     } else setFeedback({ kind: 'error', error: result.error });
     setBusy(null);
@@ -287,7 +298,7 @@ export function TtsSettingsChapter({
     previewUrlRef.current = null;
     setPreviewingId(null);
   }
-  async function preview(profile: VoiceProfile): Promise<void> {
+  async function preview(profile: TtsPublicVoiceProfile): Promise<void> {
     stopPreview();
     setPreviewingId(profile.id);
     setFeedback(null);

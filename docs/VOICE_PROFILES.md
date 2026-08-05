@@ -89,11 +89,15 @@ interface VoiceProviderBinding {
 - 运行时实现使用 `VoiceProfile`、`VoiceAuthorization` 与产品独立 `providerVoiceId`。
 - 内置“静默管家、温和导师、理性同伴、夜间低语”仅是 Original Profile 表达模板，
   默认均未绑定、不可试听，不携带真实 voice ID 或音频。
-- 手动安装必须填写类别、权利人、授权引用、允许用途和可选到期日；缺失或过期即不可用。
+- 手动安装必须填写类别、权利人、授权引用、允许用途和可选到期日；缺失、日期非法或过期
+  即不可用。`original` 只能使用 `original-work`，`licensed-character` 只能使用 `license`，
+  `consented-clone` 只能使用 `explicit-consent`。
 - `理性同伴`只是默认视觉模板，不等于已选择或已授权的 Provider 声线。
 - 试听与正式朗读调用同一个 main-process TTS API，试听不会改变当前选择。
 - 当前只实现 MiniMax Provider binding；Provider `/get_voice` 发现仍是可选后续能力，
   手动绑定始终保留。
+- Renderer 只能看到不含 `providerVoiceId` 的公共 profile 摘要；连接测试和正式朗读在 main
+  中重新解析并校验可用 profile，避免过期或篡改配置绕过授权边界。
 - 项目所有者真实 MiniMax 验收尚未完成，不能把内置模板描述成可用真实声线。
 
 ## JAR-005 历史状态

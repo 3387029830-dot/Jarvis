@@ -13,8 +13,10 @@ export const TTS_DELETE_PROFILE_CHANNEL = 'jarvis:tts:delete-profile';
 export type TtsMode = 'mock' | 'real';
 export type TtsPlaybackMode = 'off' | 'manual' | 'automatic';
 export type VoiceProfileCategory = 'original' | 'licensed-character' | 'consented-clone';
+export type VoiceAuthorizationBasis = 'original-work' | 'license' | 'explicit-consent';
 
 export interface VoiceAuthorization {
+  readonly basis: VoiceAuthorizationBasis;
   readonly expiresAt: string | null;
   readonly permittedUse: string;
   readonly reference: string;
@@ -32,6 +34,19 @@ export interface VoiceProfile {
   readonly previewText: string;
   readonly providerId: 'minimax';
   readonly providerVoiceId: string;
+  readonly templateId?: string;
+}
+
+export interface TtsPublicVoiceProfile {
+  readonly authorization: VoiceAuthorization;
+  readonly category: VoiceProfileCategory;
+  readonly description: string;
+  readonly displayName: string;
+  readonly id: string;
+  readonly locale: string;
+  readonly model: string;
+  readonly previewText: string;
+  readonly providerId: 'minimax';
   readonly templateId?: string;
 }
 
@@ -64,7 +79,7 @@ export interface TtsPublicConfig {
   readonly mode: TtsMode;
   readonly model: string;
   readonly playbackMode: TtsPlaybackMode;
-  readonly profiles: readonly VoiceProfile[];
+  readonly profiles: readonly TtsPublicVoiceProfile[];
   readonly providerId: 'minimax';
   readonly selectedProfileId: string | null;
   readonly templates: readonly VoiceProfileTemplate[];

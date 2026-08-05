@@ -1,10 +1,10 @@
 # Jarvis 当前状态
 
-最后更新：2026-08-01
+最后更新：2026-08-05
 
 当前版本：`0.1.0` / JAR-006C Draft
 
-当前阶段：JAR-006C 代码与本地验收已完成；等待项目所有者真实 MiniMax TTS 验收
+当前阶段：JAR-006C 代码与本地验收已完成，安全边界回归通过；等待项目所有者真实 MiniMax TTS 验收
 
 ## 已真实实现
 
@@ -72,6 +72,10 @@
 - vendor-neutral `TextToSpeechProvider` 契约、main-process MiniMax `/t2a_v2` 适配器、
   Bearer 请求、timeout、取消、响应上限、分类错误和 main 内 hex 解码。
 - TTS 配置、完整 Key 的 `safeStorage` 加密、末四位脱敏、版本化存储与独立播放模式。
+- TTS 公共配置只返回可展示的 Voice Profile 摘要，不暴露 Provider voice ID；连接测试与合成
+  都会重新校验授权类别、授权依据、到期日和绑定完整性。
+- TTS Base URL 复用统一 Provider URL 安全规则，拒绝远程 HTTP、凭据、query、fragment
+  和隐式重定向。
 - 中文 Markdown/链接/代码清理、确定性语义分段、最多两段预取、严格顺序无重叠播放。
 - `idle / preparing / playing / stopped / completed / error` 播放状态；停止、新录音、
   新文字、Escape 和卸载会取消请求、暂停音频并释放 Blob URL。
@@ -143,6 +147,7 @@
 - 仓库不内置任何具体人物、演员或角色 voice ID / 音频；四个模板均未绑定，必须由用户
   提供可验证授权与 Provider voice ID。
 - MiniMax 真实账户、费用、区域、voice ID 与中文自然度尚待项目所有者最终验收。
+- 本轮本地回归为 47 个测试文件、174 项测试；生产构建 Renderer 入口约 802.68 kB。
 - 不同 OpenAI-compatible STT 服务对 MIME、语言、usage 和错误状态的实现仍可能不同；
   当前结论只覆盖本地假 Provider 和项目所有者实际使用的第三方 Provider。
 - real STT 失败重试会在 Renderer 内存中短暂保留当前一份录音；应用退出、取消、成功、

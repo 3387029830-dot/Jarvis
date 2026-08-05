@@ -4,6 +4,68 @@
 
 ---
 
+## 2026-08-05 — JAR-006C 收尾安全复核与本地回归
+
+### 本次目标
+
+在项目所有者真实 MiniMax TTS 验收前，复核 JAR-006C 的 Provider 边界、Voice Profile 授权
+契约和 Renderer 数据暴露，补齐发现的回归风险，并保留 Draft PR #6。
+
+### 实现内容
+
+- Renderer 的 TTS 公共配置改为只返回 Voice Profile 展示摘要，不再暴露 Provider voice ID。
+- 连接测试与正式合成都在 main 重新检查 profile 是否存在、绑定完整、授权类别与依据匹配，
+  并拒绝非法或过期授权。
+- 持久化配置读取也会重新验证 Base URL、超时和 profile 结构；手工损坏的配置安全回退为默认
+  Mock 状态，不会继续请求 Provider。
+- TTS Base URL 改为复用统一 Provider URL 安全规则，拒绝远程 HTTP、URL 凭据、query、fragment
+  和隐式重定向。
+- 安装成功后清理声线绑定表单的脏状态，避免重复提交旧授权信息。
+- 新增 URL、授权依据、非法日期、公共配置脱敏和过期 profile 服务回归测试；假 Provider
+  acceptance fixture 补齐授权依据。
+
+### 用户现在可以做什么
+
+- 在不向 Renderer 暴露 Provider voice ID 的前提下查看已安装声线摘要。
+- 通过本地假 Provider 验证 TTS typed IPC、hex 解码、配置脱敏、取消和凭据清理。
+- 只有授权完整且未过期的声线才会进入连接测试或正式合成。
+
+### 用户目前还不能做什么
+
+- 尚未使用真实 MiniMax 账户验证真实音色、首段延迟、费用和区域可用性。
+- 不能把本地假 Provider 或仓库视觉证据当作真实 MiniMax 声音质量证明。
+- 不能使用 `/get_voice` 自动发现、SQLite、Conversation 持久化或认知事件；不得开始 JAR-007。
+
+### 验证结果
+
+- `corepack pnpm format:check`：通过。
+- `corepack pnpm lint`：通过。
+- `corepack pnpm typecheck`：通过。
+- `corepack pnpm test`：通过，47 个测试文件、174 项测试。
+- `corepack pnpm build`：通过，Renderer 入口约 802.68 kB。
+- `corepack pnpm smoke`：通过，返回 `JARVIS_IPC_SMOKE_OK`。
+- 本地假 Provider + TTS Electron acceptance：通过，返回 `JARVIS_TTS_ACCEPTANCE_OK`，
+  `audioBytes=10`、取消成功、Key 仅显示 `8642`；这不是真实 MiniMax 验收。
+- 首次在受限沙箱运行 Vitest 因 esbuild 子进程 `spawn EPERM` 失败，放宽构建子进程权限后
+  重跑通过；没有测试断言失败。
+
+### 视觉证据
+
+- 现有 `artifacts/jar-006c/` 11 张截图继续有效；本轮只收紧安全契约，没有改变视觉状态。
+- `artifacts/jar-006c/README.md` 已补充本轮公共 profile、URL 和授权校验复核说明。
+
+### 已知问题
+
+- 项目所有者真实 MiniMax TTS 验收仍是 JAR-006C 完成门槛，当前 PR #6 必须保持 Draft。
+- Renderer 入口 bundle 偏大；本轮未扩大范围做拆包重构。
+
+### 下一步
+
+项目所有者在 Jarvis 设置页手动完成真实 MiniMax 验收并反馈每项通过/失败/未执行；在此之前
+不转 Ready、不合并、不创建 JAR-007 分支。
+
+---
+
 ## 2026-08-05 — 持久化项目记忆与新窗口交接
 
 ### 本次目标
@@ -29,7 +91,8 @@
 
 ### 验证结果
 
-- 已核对当前分支 `feat/jar-006c-real-tts`、最新提交 `7153a4c` 和 Draft PR #6。
+- 已核对当前分支 `feat/jar-006c-real-tts`、最新提交 `381edcb` 和 Draft PR #6；JAR-006C
+  实现提交为父提交 `7153a4c`。
 - `PROJECT_MEMORY.md` 已链接到 README，并纳入新会话必读规则。
 - 运行 `corepack pnpm format:check`，通过。
 

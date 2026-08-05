@@ -6,11 +6,15 @@ import type {
   TtsMode,
   TtsPlaybackMode,
   TtsPublicConfig,
+  TtsPublicVoiceProfile,
   VoiceProfile,
+  VoiceProfileCategory,
   VoiceProfileTemplate,
 } from '../../shared/tts';
-import { ProviderFailure } from '../providers/provider-error';
 import type { SafeStorageAdapter } from '../providers/provider-config-store';
+import { ProviderFailure } from '../providers/provider-error';
+import { validateProviderBaseUrl } from '../providers/provider-validation';
+import { validateVoiceProfile } from './tts-validation';
 
 interface StoredTtsConfig {
   readonly baseUrl: string;
@@ -65,19 +69,56 @@ const defaults: StoredTtsConfig = {
   version: 1,
 };
 
+const authorizationBasisByCategory: Readonly<
+  Record<VoiceProfileCategory, VoiceProfile['authorization']['basis']>
+> = {
+  original: 'original-work',
+  'licensed-character': 'license',
+  'consented-clone': 'explicit-consent',
+};
+
+function toPublicProfile(profile: VoiceProfile): TtsPublicVoiceProfile {
+  return {
+    authorization: profile.authorization,
+    category: profile.category,
+    description: profile.description,
+    displayName: profile.displayName,
+    id: profile.id,
+    locale: profile.locale,
+    model: profile.model,
+    previewText: profile.previewText,
+    providerId: profile.providerId,
+    ...(profile.templateId ? { templateId: profile.templateId } : {}),
+  };
+}
+
 function valid(value: unknown): value is StoredTtsConfig {
   if (!value || typeof value !== 'object') return false;
   const r = value as Record<string, unknown>;
-  return (
+  if (
     r.version === 1 &&
     typeof r.baseUrl === 'string' &&
+    r.baseUrl.trim() !== '' &&
     typeof r.language === 'string' &&
+    r.language.trim() !== '' &&
     (r.mode === 'mock' || r.mode === 'real') &&
     typeof r.model === 'string' &&
+    r.model.trim() !== '' &&
     (r.playbackMode === 'off' || r.playbackMode === 'manual' || r.playbackMode === 'automatic') &&
     Array.isArray(r.profiles) &&
-    typeof r.timeoutMs === 'number'
-  );
+    typeof r.timeoutMs === 'number' &&
+    r.timeoutMs >= 3000 &&
+    r.timeoutMs <= 120000
+  ) {
+    try {
+      validateProviderBaseUrl(r.baseUrl);
+      r.profiles.forEach((profile) => validateVoiceProfile(profile));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
 export function isProfileAvailable(profile: VoiceProfile, now = new Date()): boolean {
@@ -88,8 +129,11 @@ export function isProfileAvailable(profile: VoiceProfile, now = new Date()): boo
     !authorization.permittedUse.trim()
   )
     return false;
-  if (authorization.expiresAt && new Date(authorization.expiresAt).getTime() <= now.getTime())
-    return false;
+  if (authorization.basis !== authorizationBasisByCategory[profile.category]) return false;
+  if (authorization.expiresAt) {
+    const expiresAt = Date.parse(authorization.expiresAt);
+    if (!Number.isFinite(expiresAt) || expiresAt <= now.getTime()) return false;
+  }
   return Boolean(
     profile.providerVoiceId.trim() && profile.displayName.trim() && profile.model.trim(),
   );
@@ -133,12 +177,22 @@ export class TtsConfigStore {
       mode: c.mode,
       model: c.model,
       playbackMode: c.playbackMode,
-      profiles: c.profiles,
+      profiles: c.profiles.map(toPublicProfile),
       providerId: 'minimax',
       selectedProfileId: c.selectedProfileId ?? null,
       templates: voiceProfileTemplates,
       timeoutMs: c.timeoutMs,
     };
+  }
+  async getProfile(profileId: string): Promise<VoiceProfile | null> {
+    const c = await this.read();
+    return c.profiles.find((profile) => profile.id === profileId) ?? null;
+  }
+  async getSelectedProfile(): Promise<VoiceProfile | null> {
+    const c = await this.read();
+    return c.selectedProfileId
+      ? (c.profiles.find((profile) => profile.id === c.selectedProfileId) ?? null)
+      : null;
   }
   async getCredential(): Promise<string | null> {
     const c = await this.read();

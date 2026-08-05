@@ -11,7 +11,7 @@ export async function runTtsAcceptance(window: BrowserWindow): Promise<TtsAccept
   return (await window.webContents.executeJavaScript(
     `(async () => {
       const profile = {
-        authorization: { expiresAt: null, permittedUse: 'localhost acceptance only', reference: 'JAR-006C-LOCAL', rightsHolder: 'Jarvis original test fixture' },
+        authorization: { basis: 'original-work', expiresAt: null, permittedUse: 'localhost acceptance only', reference: 'JAR-006C-LOCAL', rightsHolder: 'Jarvis original test fixture' },
         category: 'original', description: 'Local deterministic fixture', displayName: 'Local acceptance voice',
         id: 'local-acceptance-profile', locale: 'zh-CN', model: 'speech-2.8-turbo',
         previewText: '这是本地语音合成验收。', providerId: 'minimax', providerVoiceId: 'jarvis-local-voice'

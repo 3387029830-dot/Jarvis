@@ -40,3 +40,12 @@ voice ID、授权编号、Key 后四位、播放状态与延迟都是无隐私�
 - 截图不验证真实音色、费用或真实首段延迟。
 - 200% 缩放已用生产 Electron 人工检查，可滚动单列布局与键盘入口可用；该临时检查图未提交。
 - `/get_voice` 尚未实现，真实 voice ID 必须手动绑定。
+
+## 2026-08-05 安全边界复核
+
+- 公共 Renderer 配置不包含 Provider voice ID；该 ID 只在 main 的安全配置和请求路径中使用。
+- TTS URL 复用统一 Provider 安全校验，远程 HTTP、URL 凭据、query、fragment 和隐式重定向
+  均会被拒绝。
+- Voice Profile 的类别与授权依据必须匹配，非法或过期授权不会被连接测试或合成使用。
+- 本地假 Provider Electron acceptance 通过；真实 MiniMax 账户、音色自然度、费用和区域可用性
+  仍待项目所有者手工验收。现有截图仍为无隐私的确定性 evidence，不包含真实音频。

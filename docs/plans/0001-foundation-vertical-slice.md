@@ -388,7 +388,13 @@ For JAR-005 specifically:
   trace ID and usage characters. MiniMax hex is decoded to `Uint8Array` only in main.
 - `tts-config.v1.json` under Electron userData stores public TTS settings, playback mode and
   `safeStorage` ciphertext. Renderer receives only public configuration and a masked suffix; it
-  cannot issue arbitrary URLs, headers or Provider payloads.
+  cannot issue arbitrary URLs, headers or Provider payloads. Public profile summaries omit
+  `providerVoiceId`; main resolves it only after re-checking authorization and expiry.
+- TTS configuration reuses the shared Provider Base URL policy: public HTTP is limited to localhost,
+  URL credentials, query strings, fragments and implicit redirects are rejected. Profile category
+  and `authorization.basis` must match, and malformed expiry dates make a profile unavailable.
+  Persisted Base URL, timeout and profile structure are revalidated on read; unsafe or corrupt config
+  falls back to the default Mock state.
 - Speakable text is derived without changing the visible answer. Markdown syntax and URLs are
   normalized, code blocks are summarized, and deterministic Chinese-aware segmentation merges
   short fragments and splits long fragments without breaking numbers or common Latin
@@ -435,6 +441,14 @@ For JAR-005 specifically:
   单列布局，1440/1024 与 reduced-motion 均可操作。
 - 2026-08-01：最终质量门禁通过：format、lint、strict typecheck、45 个测试文件 / 165 项
   测试、build、Electron IPC smoke。Renderer bundle 802.32 kB，记录为后续拆包风险。
+- 2026-08-05：收尾复核发现公共 TTS 配置曾暴露 Provider voice ID，且连接测试未重新检查已选
+  profile 的有效授权；现已改为公共摘要、main 私下解析，并补齐类别/授权依据、非法到期日
+  与统一 URL 安全校验。新增过期 profile 服务回归测试。
+- 2026-08-05：质量门禁复跑通过：format、lint、strict typecheck、47 个测试文件 / 174 项
+  测试、production build、普通 Electron smoke 与本地假 MiniMax TTS acceptance；首次测试
+  因沙箱禁止 esbuild 子进程而报 `spawn EPERM`，在允许构建子进程的环境重跑通过。
+- 2026-08-05：真实 MiniMax 账户验收仍未执行；PR #6 保持 Draft，不转 Ready、不合并、不创建
+  JAR-007 分支。
 
 - 2026-08-01: Began JAR-006C on `feat/jar-006c-real-tts` after reading the repository instructions,
   every requested product/architecture/voice/Provider/security/status/task document, the complete

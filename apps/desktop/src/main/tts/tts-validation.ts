@@ -2,9 +2,12 @@ import type {
   TtsDraftConfig,
   TtsSaveInput,
   TtsSynthesisRequest,
+  VoiceProfileCategory,
+  VoiceAuthorizationBasis,
   VoiceProfile,
 } from '../../shared/tts';
 import { ProviderFailure } from '../providers/provider-error';
+import { validateProviderBaseUrl } from '../providers/provider-validation';
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object') throw new ProviderFailure('invalid_configuration');
@@ -20,23 +23,7 @@ function string(r: Record<string, unknown>, key: string, max = 500): string {
 }
 function base(raw: unknown): TtsDraftConfig {
   const r = record(raw);
-  const baseUrl = string(r, 'baseUrl');
-  let parsed: URL;
-  try {
-    parsed = new URL(baseUrl);
-  } catch {
-    throw new ProviderFailure('invalid_configuration', {
-      safeTechnicalSummary: 'tts_invalid_baseUrl',
-    });
-  }
-  if (
-    parsed.protocol !== 'https:' &&
-    parsed.hostname !== 'localhost' &&
-    parsed.hostname !== '127.0.0.1'
-  )
-    throw new ProviderFailure('invalid_configuration', {
-      safeTechnicalSummary: 'tts_insecure_baseUrl',
-    });
+  const baseUrl = validateProviderBaseUrl(r.baseUrl);
   const timeoutMs = r.timeoutMs;
   if (typeof timeoutMs !== 'number' || timeoutMs < 3000 || timeoutMs > 120000)
     throw new ProviderFailure('invalid_configuration', {
@@ -70,20 +57,30 @@ export function validateTtsRequest(raw: unknown): TtsSynthesisRequest {
 export function validateVoiceProfile(raw: unknown): VoiceProfile {
   const r = record(raw);
   const a = record(r.authorization);
+  const category = r.category;
+  const basis = a.basis;
+  const expectedBasis: Readonly<Record<VoiceProfileCategory, VoiceAuthorizationBasis>> = {
+    original: 'original-work',
+    'licensed-character': 'license',
+    'consented-clone': 'explicit-consent',
+  };
   if (
-    r.category !== 'original' &&
-    r.category !== 'licensed-character' &&
-    r.category !== 'consented-clone'
+    (category !== 'original' &&
+      category !== 'licensed-character' &&
+      category !== 'consented-clone') ||
+    (basis !== 'original-work' && basis !== 'license' && basis !== 'explicit-consent') ||
+    expectedBasis[category] !== basis
   )
     throw new ProviderFailure('invalid_configuration');
   return {
     authorization: {
+      basis,
       expiresAt: typeof a.expiresAt === 'string' && a.expiresAt ? a.expiresAt : null,
       permittedUse: string(a, 'permittedUse'),
       reference: string(a, 'reference'),
       rightsHolder: string(a, 'rightsHolder'),
     },
-    category: r.category,
+    category,
     description: string(r, 'description'),
     displayName: string(r, 'displayName', 80),
     id: string(r, 'id', 128),
